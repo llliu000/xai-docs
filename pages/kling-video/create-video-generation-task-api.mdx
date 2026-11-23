@@ -1,0 +1,427 @@
+---
+title: 创建视频生成任务
+description: 提交 Kling 4.0 或 Kling 4.0 Flash 全能视频生成任务，支持参考生成和视频编辑。
+fullWidth: true
+centered: false
+---
+
+import { ApiField } from "../doubao-video/ApiField";
+
+export const officialUrl = "https://kling.ai/document-api/api/video/4-0";
+
+<p className="ark-api-endpoint">
+  <strong>POST</strong>
+  <code apiPath="/omni-video/kling-4.0" defaultBaseUrl="https://api-singapore.klingai.com" />
+</p>
+
+提交提示词和参考素材创建异步视频生成任务。接口支持参考生成、关键帧生成和视频编辑。提交后可使用返回的 `data.id` [查询任务状态和结果](/kling-video/get-video-generation-task-api)。
+
+## 模型选择
+
+通过请求路径选择模型。
+
+| 模型 | 请求路径 | 输出分辨率 | 生成时长 |
+| --- | --- | --- | --- |
+| Kling 4.0 | `POST /omni-video/kling-4.0` | 720p、1080p、4K | 3–30 秒 |
+| Kling 4.0 Flash | `POST /omni-video/kling-4.0-flash` | 720p | 3–20 秒 |
+
+> **Kling 4.0 Flash** 支持混用图片、视频与主体进行参考生成和视频编辑。关键帧仅支持单张首帧 `first_frame`，暂不支持首尾帧、多关键帧、声音克隆或主体绑定音色。单个输入视频及视频素材合计时长均为 3–20 秒。
+
+模型能力见[可灵 4.0 官方使用指南](https://kling.ai/document-api/api/usage-guide/kling-4-0)和[可灵 API 更新日志](https://kling.ai/document-api/updates/api)。
+
+<div className="ark-api-reference">
+<div className="ark-api-columns">
+<div>
+
+## 鉴权
+
+本接口支持以下鉴权方式，详情见 [可灵官方鉴权说明](https://kling.ai/document-api/apiReference/commonInfo)。
+
+- API Key 鉴权。前往 [可灵 API Key 管理](https://kling.ai/dev/api-key) 获取 API Key。
+
+---
+
+## 请求参数
+
+### 请求头
+
+<div className="ark-api-fields">
+
+<ApiField name="Authorization" type="string" label="API Key" sourceUrl={officialUrl} required>
+
+请求头的值为 `Bearer $KLING_API_KEY`，`Bearer` 与密钥之间保留一个空格。
+
+</ApiField>
+
+<ApiField name="Content-Type" type="string" label="数据交换格式" sourceUrl={officialUrl} required defaultValue="application/json">
+
+指定 JSON 数据格式，值为 `application/json`。
+
+</ApiField>
+
+</div>
+
+### 请求体
+
+<div className="ark-api-fields">
+
+<ApiField name="contents" type="array" label="输入内容" sourceUrl={officialUrl} required>
+
+必须包含 `prompt` 项。图片、视频、主体和音色合计最多 15 个。每项包含 `type`，其余字段随输入类型变化。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="输入类型" sourceUrl={officialUrl} required>
+
+支持 `prompt`、`first_frame`、`middle_frame`、`last_frame`、`refer_image`、`feature_video`、`base_video`、`element`、`voice`。
+
+- `prompt` 提供生成或编辑指令。
+- `first_frame`、`middle_frame`、`last_frame` 分别提供首帧、中间帧和尾帧。`refer_image` 提供参考图。Flash 的关键帧仅支持 `first_frame`。
+- `feature_video` 提供动作、运镜等特征的参考视频。`base_video` 提供要编辑的原视频，每个任务最多 1 个。
+- `element` 提供主体。`voice` 提供参考音色。声音克隆和主体绑定音色适用于 Kling 4.0。
+
+</ApiField>
+
+<ApiField name="text" type="string" label="提示词" sourceUrl={officialUrl} required="conditional">
+
+`type` 为 `prompt` 时必填。纯英文最多 26,000 个字符，纯非英文最多 11,000 个字符。混合输入须满足 `英文字数 / 26000 + 非英文字数 / 11000 ≤ 1`，按字符计数。
+
+通过 `@id` 指定素材在任务中的作用，例如 `@Image1`。视频编辑可在提示词中注明要调整和保留的内容。
+
+</ApiField>
+
+<ApiField name="url" type="string" label="图片或视频素材" sourceUrl={officialUrl} required="conditional">
+
+图片和视频项必填。图片支持 URL 或 Base64，视频通过 URL 提供。
+
+- 图片支持 JPG、JPEG 和 PNG，单张不超过 30 MB，宽和高均至少为 300 px，宽高比在 2:5 至 5:2 之间。最多 10 张图。同时提供首帧、尾帧和参考图时，首帧应为 `contents` 中的第一张图，尾帧应为最后一张图。
+- 视频支持 MP4 和 MOV，单个文件不超过 300 MB。宽和高均在 700–4553 px 之间，总像素不超过 8,294,400，宽高比在 2:5 至 5:2 之间，输入帧率为 24–60 fps。生成视频为 24 fps。
+- 单个视频及合计输入时长均须符合模型限制。Kling 4.0 为 3–30 秒，Kling 4.0 Flash 为 3–20 秒。合计时长包含 `feature_video`、`base_video` 和视频角色主体的时长。
+- 视频项最多 5 个。使用视频角色主体时，视频项和视频角色主体的数量之和不得超过 5。
+
+</ApiField>
+
+<ApiField name="id" type="string" label="素材引用 ID" sourceUrl={officialUrl} required="conditional">
+
+使用 `@id` 在提示词中引用对应素材。ID 在同一任务内必须唯一。主体、音色、多张中间帧或多张参考图需要提供各自的 `id`。
+
+</ApiField>
+
+<ApiField name="element_id" type="string" label="主体 ID" sourceUrl={officialUrl} required="conditional">
+
+`type` 为 `element` 时必填，从主体相关接口获取。功能支持视频角色主体和多图主体，每次最多 7 个主体，其中最多 3 个视频角色主体。视频角色主体与参考视频合计最多 5 个。
+
+</ApiField>
+
+<ApiField name="voice_id" type="string" label="音色 ID" sourceUrl={officialUrl} required="conditional">
+
+`type` 为 `voice` 时必填，可使用自定义音色接口返回的 ID 或系统预设音色。单个任务最多引用 3 个音色。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="settings" type="object" label="输出设置" sourceUrl={officialUrl}>
+
+设置音频、分辨率、动态范围、宽高比和时长。
+
+<div className="ark-api-fields">
+
+<ApiField name="audio" type="string" label="音频模式" sourceUrl={officialUrl} defaultValue="native">
+
+`native` 随视频生成匹配的音频。`original` 保留输入视频的原声，要求至少提供一个 `base_video` 或 `feature_video`，且请求中不能包含音色引用。优先保留 `base_video` 的音频，否则使用 `contents` 中第一个 `feature_video` 的音频。
+
+</ApiField>
+
+<ApiField name="resolution" type="string" label="输出分辨率" sourceUrl={officialUrl}>
+
+Kling 4.0 支持 `720p`、`1080p`（默认）和 `4k`。Kling 4.0 Flash 只支持 `720p`。请通过此字段指定分辨率。
+
+</ApiField>
+
+<ApiField name="dynamic_range" type="string" label="动态范围" sourceUrl={officialUrl} defaultValue="sdr">
+
+`sdr` 输出标准动态范围视频。`hdr` 输出高动态范围视频，仅在输出分辨率为 `1080p` 或 `4k` 时可用。
+
+</ApiField>
+
+<ApiField name="aspect_ratio" type="string" label="输出宽高比" sourceUrl={officialUrl} defaultValue="adaptive">
+
+支持 `21:9`、`16:9`、`9:16`、`1:1`、`4:3`、`3:4`、`adaptive`。设置为明确比例时，该值优先于提示词。
+
+省略或设为 `adaptive` 时，依次采用提示词中明确指定的比例、`base_video` 的比例、关键帧图片的比例（优先首帧）、单个 `feature_video` 的比例。存在多个 `feature_video` 或没有可用比例时，回退到 `16:9`。
+
+</ApiField>
+
+<ApiField name="duration" type="integer" label="输出时长" sourceUrl={officialUrl}>
+
+单位为秒，取整数。Kling 4.0 为 3–30 秒，Kling 4.0 Flash 为 3–20 秒。
+
+此字段优先于提示词里的时长。两者均未指定时，有 `base_video` 则取其时长四舍五入的整数秒，否则使用 10 秒。计费用量可在查询接口的 `usage.output_duration` 查看。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="options" type="object" label="任务选项" sourceUrl={officialUrl}>
+
+设置任务回调、自定义 ID 和水印。
+
+<div className="ark-api-fields">
+
+<ApiField name="callback_url" type="string" label="回调地址" sourceUrl={officialUrl}>
+
+设置后，任务状态变化时可灵会向此地址发送通知。
+
+</ApiField>
+
+<ApiField name="external_task_id" type="string" label="自定义任务 ID" sourceUrl={officialUrl}>
+
+在同一用户账号下必须唯一。系统仍会为任务生成 `data.id`。查询时也可将此自定义 ID 传给 `external_task_ids`。
+
+</ApiField>
+
+<ApiField name="watermark_info" type="object" label="水印配置" sourceUrl={officialUrl}>
+
+控制是否同时生成带水印的视频。使用平台水印。
+
+<div className="ark-api-fields">
+
+<ApiField name="enabled" type="boolean" label="生成带水印结果" sourceUrl={officialUrl} defaultValue="false">
+
+`true` 同时生成带水印的结果，`false` 仅生成常规结果。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+## 响应参数
+
+<div className="ark-api-fields">
+
+<ApiField name="code" type="integer" label="接口返回码" sourceUrl={officialUrl}>
+
+成功时为 `0`。失败时可查阅[可灵官方错误码](https://kling.ai/document-api/api/get-started/error-codes)。
+
+</ApiField>
+
+<ApiField name="message" type="string" label="接口返回信息" sourceUrl={officialUrl}>
+
+描述本次请求的处理结果。
+
+</ApiField>
+
+<ApiField name="request_id" type="string" label="请求 ID" sourceUrl={officialUrl}>
+
+系统生成的请求标识，可用于问题排查。
+
+</ApiField>
+
+<ApiField name="data" type="object" label="任务信息" sourceUrl={officialUrl}>
+
+包含新建任务的标识、状态及时间。
+
+<div className="ark-api-fields">
+
+<ApiField name="id" type="string" label="任务 ID" sourceUrl={officialUrl}>
+
+可灵系统分配的任务 ID。查询时将此值传给 `task_ids`。
+
+</ApiField>
+
+<ApiField name="status" type="string" label="任务状态" sourceUrl={officialUrl}>
+
+| 值 | 含义 |
+| --- | --- |
+| `submitted` | 已提交 |
+| `processing` | 正在处理 |
+| `succeeded` | 生成成功 |
+| `failed` | 生成失败 |
+
+</ApiField>
+
+<ApiField name="create_time" type="integer" label="创建时间" sourceUrl={officialUrl}>
+
+任务创建时间，Unix 毫秒时间戳。
+
+</ApiField>
+
+<ApiField name="update_time" type="integer" label="更新时间" sourceUrl={officialUrl}>
+
+任务最近更新时间，Unix 毫秒时间戳。
+
+</ApiField>
+
+<ApiField name="external_id" type="string" label="自定义任务 ID" sourceUrl={officialUrl}>
+
+创建任务时通过 `options.external_task_id` 提供的 ID。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+</div>
+<aside className="ark-api-examples" aria-label="接口示例">
+
+## 输入示例
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```sh title="Kling 4.0 · 多素材参考"
+curl -sS --request POST \
+  "${base_url}/omni-video/kling-4.0" \
+  --header "Authorization: Bearer ${KLING_API_KEY}" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "contents": [
+      {
+        "type": "prompt",
+        "text": "沿用 @Video1 的运镜和节奏，将主体替换为 @Image1 中的赛车，置于霓虹灯照亮的赛道上。"
+      },
+      {
+        "type": "feature_video",
+        "url": "https://p2-kling.klingai.com/kcdn/cdn-kcdn112452/kling-tob-release-note/ch12_3_camera_motion_source.mp4",
+        "id": "Video1"
+      },
+      {
+        "type": "refer_image",
+        "url": "https://p2-kling.klingai.com/kcdn/cdn-kcdn112452/kling-tob-release-note/ch12_3_race_car_ref.png",
+        "id": "Image1"
+      }
+    ],
+    "settings": {
+      "resolution": "1080p",
+      "aspect_ratio": "adaptive",
+      "duration": 8
+    },
+    "options": {
+      "external_task_id": "demo-video-01"
+    }
+  }'
+```
+
+```sh title="Kling 4.0 Flash · 首帧生成"
+curl -sS --request POST \
+  "${base_url}/omni-video/kling-4.0-flash" \
+  --header "Authorization: Bearer ${KLING_API_KEY}" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "contents": [
+      {
+        "type": "prompt",
+        "text": "以 @Image1 为首帧，镜头缓缓向前，沿着赛车车身滑过，背景灯光掠过车窗。"
+      },
+      {
+        "type": "first_frame",
+        "url": "https://p2-kling.klingai.com/kcdn/cdn-kcdn112452/kling-tob-release-note/ch12_3_race_car_ref.png",
+        "id": "Image1"
+      }
+    ],
+    "settings": {
+      "resolution": "720p",
+      "aspect_ratio": "adaptive",
+      "duration": 5
+    }
+  }'
+```
+
+```sh title="Kling 4.0 · 视频编辑"
+curl -sS --request POST \
+  "${base_url}/omni-video/kling-4.0" \
+  --header "Authorization: Bearer ${KLING_API_KEY}" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "contents": [
+      {
+        "type": "prompt",
+        "text": "编辑 @Video1，去掉画面前景人物，保留背景和原有镜头运动。"
+      },
+      {
+        "type": "base_video",
+        "url": "https://p2-kling.klingai.com/kcdn/cdn-kcdn112452/kling-tob-release-note/ch12_5_guitar_foreground_source.mp4",
+        "id": "Video1"
+      }
+    ],
+    "settings": {
+      "resolution": "4k",
+      "dynamic_range": "hdr",
+      "aspect_ratio": "adaptive"
+    }
+  }'
+```
+
+```sh title="Kling 4.0 · 音色参考"
+curl -sS --request POST \
+  "${base_url}/omni-video/kling-4.0" \
+  --header "Authorization: Bearer ${KLING_API_KEY}" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "contents": [
+      {
+        "type": "prompt",
+        "text": "以 @Image1 为人物参考。列车行进中，她望向窗外，随后转身用 @1 的声音说：“我快到了。”"
+      },
+      {
+        "type": "refer_image",
+        "url": "https://p2-kling.klingai.com/kcdn/cdn-kcdn112452/kling-tob-release_note/image_25.png",
+        "id": "Image1"
+      },
+      {
+        "type": "voice",
+        "voice_id": "829837252279803904",
+        "id": "1"
+      }
+    ],
+    "settings": {
+      "resolution": "1080p",
+      "aspect_ratio": "9:16",
+      "duration": 5
+    },
+    "options": {
+      "watermark_info": {
+        "enabled": false
+      }
+    }
+  }'
+```
+
+</CodeTabs>
+</div>
+
+## 输出示例
+
+```json
+{
+  "code": 0,
+  "message": "success",
+  "request_id": "req-demo",
+  "data": {
+    "id": "893605946402811985",
+    "status": "submitted",
+    "create_time": 1781080778802,
+    "update_time": 1781080778802,
+    "external_id": "demo-video-01"
+  }
+}
+```
+
+</aside>
+</div>
+</div>

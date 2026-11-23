@@ -1,0 +1,962 @@
+---
+title: Chat格式
+description: 使用 OpenAI Chat Completions API 发送对话消息并接收文本、工具调用或流式响应。
+fullWidth: true
+centered: false
+---
+
+import { ApiField } from "../doubao-video/ApiField";
+
+export const officialUrl = "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create";
+export const authUrl = "https://developers.openai.com/api/reference/overview#authentication";
+
+<p className="ark-api-endpoint">
+  <strong>POST</strong>
+  <code apiPath="/v1/chat/completions" defaultBaseUrl="https://api.openai.com" />
+</p>
+
+按顺序提交 `messages` 对话消息，由模型生成下一条回复。接口支持多轮文本对话、图片等多模态输入、结构化 JSON、工具调用和流式输出，具体能力取决于模型。[OpenAI 官方接口参考](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create)
+
+<div className="ark-api-reference">
+<div className="ark-api-columns">
+<div>
+
+## 鉴权
+
+本接口支持以下鉴权方式，详情见 [OpenAI 官方鉴权说明](https://developers.openai.com/api/reference/overview#authentication)。
+
+- API Key 鉴权。前往 [OpenAI API Key 管理](https://platform.openai.com/api-keys) 获取 API Key。
+
+---
+
+## 请求参数
+
+### 请求头
+
+<div className="ark-api-fields">
+
+<ApiField name="Authorization" type="string" label="API Key" sourceUrl={authUrl} sourceText="Authorization" required>
+
+传入 `Bearer $OPENAI_API_KEY`。
+
+</ApiField>
+
+<ApiField name="Content-Type" type="string" label="请求内容类型" sourceUrl={officialUrl} sourceText="Content-Type" required>
+
+请求体使用 `application/json`。
+
+</ApiField>
+
+<ApiField name="OpenAI-Organization" type="string" label="组织 ID" sourceUrl={authUrl} sourceText="OpenAI-Organization">
+
+需要明确指定计费组织时传入。
+
+</ApiField>
+
+<ApiField name="OpenAI-Project" type="string" label="项目 ID" sourceUrl={authUrl} sourceText="OpenAI-Project">
+
+需要明确指定计费项目时传入。
+
+</ApiField>
+
+</div>
+
+### 请求体
+
+<div className="ark-api-fields">
+
+<ApiField name="messages" type="object[]" label="对话消息" sourceUrl={officialUrl} sourceText="messages" required>
+
+按顺序传入历史消息和本轮输入，至少一条。各角色的内容结构可展开查看。
+
+<div className="ark-api-fields">
+
+<ApiField name="role" type="string" label="消息角色" sourceUrl={officialUrl} sourceText="role" required>
+
+`developer` 提供应用指令。`system` 用于支持该角色的模型。`user` 提供输入，`assistant` 用于回传助手历史，`tool` 回传客户端工具结果，`function` 为旧格式。
+
+</ApiField>
+
+<ApiField name="content" type="string、array 或 null" label="消息内容" sourceUrl={officialUrl} sourceText="content">
+
+通常为文本或内容块数组，支持哪些块由角色和模型决定。包含 `tool_calls` 或旧 `function_call` 的助手消息可省略正文。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="内容块类型" sourceUrl={officialUrl} sourceText="type" required>
+
+用户消息可使用 `text`、`image_url`、`input_audio` 或 `file`，具体取决于模型。`developer`、`system` 和 `tool` 消息中的内容块使用 `text`，`assistant` 历史消息还可包含 `refusal`。
+
+</ApiField>
+
+<ApiField name="text" type="string" label="文本内容" sourceUrl={officialUrl} sourceText="text">
+
+用于 `type: "text"`。
+
+</ApiField>
+
+<ApiField name="image_url" type="object" label="图片输入" sourceUrl={officialUrl} sourceText="image_url">
+
+`url` 支持图片 URL 或带 MIME 类型的 Base64 data URL。`detail` 可为 `auto`（默认）、`low`、`high` 或 `original`，可用档位因模型而异。[图片输入指南](https://developers.openai.com/api/docs/guides/images-vision)
+
+</ApiField>
+
+<ApiField name="input_audio" type="object" label="音频输入" sourceUrl={officialUrl} sourceText="input_audio">
+
+`data` 为 Base64 编码的音频字节，`format` 为 `wav` 或 `mp3`。
+
+</ApiField>
+
+<ApiField name="file" type="object" label="文件输入" sourceUrl={officialUrl} sourceText="file">
+
+使用 `file_id` 引用已上传文件，或通过 `file_data` 和 `filename` 提交编码后的文件数据及名称。
+
+</ApiField>
+
+<ApiField name="refusal" type="string" label="拒绝说明" sourceUrl={officialUrl} sourceText="refusal">
+
+用于回传助手的 `type: "refusal"` 内容块。
+
+</ApiField>
+
+<ApiField name="prompt_cache_breakpoint" type="object" label="显式提示词缓存断点" sourceUrl={officialUrl} sourceText="prompt_cache_breakpoint">
+
+标记可复用前缀的结束位置。`mode` 为 `explicit`，省略 `ttl` 时继承请求设置。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="name" type="string" label="参与者名称" sourceUrl={officialUrl} sourceText="name">
+
+用于区分相同角色的参与者，旧 `function` 消息使用函数名。
+
+</ApiField>
+
+<ApiField name="tool_calls" type="object[]" label="助手的工具调用记录" sourceUrl={officialUrl} sourceText="tool_calls">
+
+将上轮助手返回的调用原样放回历史。每项包含 `id` 和 `type`，并随类型包含 `function` 或 `custom`。
+
+</ApiField>
+
+<ApiField name="tool_call_id" type="string" label="对应的工具调用 ID" sourceUrl={officialUrl} sourceText="tool_call_id" required="conditional">
+
+`role: "tool"` 时必填，值来自对应的 `assistant.tool_calls[].id`。
+
+</ApiField>
+
+<ApiField name="audio" type="object 或 null" label="助手音频引用" sourceUrl={officialUrl} sourceText="audio">
+
+多轮对话通过 `audio.id` 引用先前响应中的音频。
+
+</ApiField>
+
+<ApiField name="refusal" type="string 或 null" label="助手拒绝说明" sourceUrl={officialUrl} sourceText="refusal">
+
+历史助手消息中的拒绝说明。
+
+</ApiField>
+
+<ApiField name="function_call" type="object 或 null" label="旧版函数调用" sourceUrl={officialUrl} sourceText="function_call">
+
+已弃用，历史回传字段包含 `name` 和 `arguments`。新请求使用 `tool_calls`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="model" type="string" label="模型 ID" sourceUrl={officialUrl} sourceText="model" required>
+
+选择支持 Chat Completions 的模型，例如 `gpt-6.2-astra`。请按模型核对模态和可用参数。[OpenAI 模型列表](https://developers.openai.com/api/docs/models)
+
+</ApiField>
+
+<ApiField name="audio" type="object 或 null" label="音频输出配置" sourceUrl={officialUrl} sourceText="audio" required="conditional">
+
+请求音频输出时必填。`format` 选择编码格式，例如 `wav`、`mp3`、`flac`、`opus` 或 `pcm16`。`voice` 使用支持的预设音色，或使用包含 `id` 的自定义音色引用。
+
+</ApiField>
+
+<ApiField name="frequency_penalty" type="number 或 null" label="频率惩罚" sourceUrl={officialUrl} sourceText="frequency_penalty" defaultValue="0">
+
+范围 −2.0 至 2.0。正值按出现频率降低重复用词的倾向。
+
+</ApiField>
+
+<ApiField name="function_call" type="string 或 object" label="旧版函数选择" sourceUrl={officialUrl} sourceText="function_call">
+
+已弃用，使用 `tool_choice`。旧值为 `none`、`auto` 或指定函数名的 `{"name":"my_function"}`。
+
+</ApiField>
+
+<ApiField name="functions" type="object[]" label="旧版函数定义" sourceUrl={officialUrl} sourceText="functions">
+
+已弃用，使用 `tools`。旧格式传 1–128 个定义，每项含 `name`，可包含 `description` 和 `parameters`。
+
+</ApiField>
+
+<ApiField name="logit_bias" type="object 或 null" label="令牌偏置" sourceUrl={officialUrl} sourceText="logit_bias">
+
+将令牌 ID 映射到 −100 至 100 的偏置。负值降低出现概率，正值提高。
+
+</ApiField>
+
+<ApiField name="logprobs" type="boolean 或 null" label="返回令牌对数概率" sourceUrl={officialUrl} sourceText="logprobs" defaultValue="false">
+
+设为 `true` 时，支持的模型可返回输出令牌的对数概率。
+
+</ApiField>
+
+<ApiField name="max_completion_tokens" type="integer 或 null" label="生成令牌上限" sourceUrl={officialUrl} sourceText="max_completion_tokens">
+
+包含可见输出和推理令牌。
+
+</ApiField>
+
+<ApiField name="max_tokens" type="integer 或 null" label="旧版生成令牌上限" sourceUrl={officialUrl} sourceText="max_tokens">
+
+已弃用，使用 `max_completion_tokens`。o 系列模型不兼容此字段。
+
+</ApiField>
+
+<ApiField name="metadata" type="object 或 null" label="元数据" sourceUrl={officialUrl} sourceText="metadata">
+
+最多 16 个键值对。字符串键最多 64 个字符，字符串值最多 512 个字符。
+
+</ApiField>
+
+<ApiField name="modalities" type="string[] 或 null" label="输出模态" sourceUrl={officialUrl} sourceText="modalities">
+
+通常输出 `["text"]`。支持音频的模型可以请求 `["text", "audio"]`，同时设置 `audio`。
+
+</ApiField>
+
+<ApiField name="moderation" type="object 或 null" label="内容审核设置" sourceUrl={officialUrl} sourceText="moderation">
+
+按需对请求的输入或输出运行审核。
+
+<div className="ark-api-fields">
+
+<ApiField name="model" type="string" label="审核模型" sourceUrl={officialUrl} sourceText="model" required>
+
+指定审核模型，例如 `omni-moderation-latest`。
+
+</ApiField>
+
+<ApiField name="policy" type="object 或 null" label="审核策略" sourceUrl={officialUrl} sourceText="policy">
+
+可在 `input.mode`、`output.mode` 分别设定 `score` 或 `block`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="n" type="integer 或 null" label="候选数量" sourceUrl={officialUrl} sourceText="n" defaultValue="1">
+
+省略时生成一个候选。支持此字段的模型可请求 1–128 个候选。部分新模型会拒绝显式传入，即使值为 1。
+
+</ApiField>
+
+<ApiField name="parallel_tool_calls" type="boolean" label="并行工具调用" sourceUrl={officialUrl} sourceText="parallel_tool_calls" defaultValue="true">
+
+控制模型在一轮内是否可以发起多个函数调用。
+
+</ApiField>
+
+<ApiField name="prediction" type="object 或 null" label="预测输出" sourceUrl={officialUrl} sourceText="prediction">
+
+当预先知道大部分输出时，支持的模型可传入 `type: "content"` 和已有的 `content`。`content` 可为字符串或文本块数组。
+
+</ApiField>
+
+<ApiField name="presence_penalty" type="number 或 null" label="出现惩罚" sourceUrl={officialUrl} sourceText="presence_penalty" defaultValue="0">
+
+范围 −2.0 至 2.0。正值根据令牌是否已经出现来降低重复倾向。
+
+</ApiField>
+
+<ApiField name="prompt_cache_key" type="string 或 null" label="提示词缓存键" sourceUrl={officialUrl} sourceText="prompt_cache_key">
+
+用稳定的键归并相似请求，提高缓存命中率。
+
+</ApiField>
+
+<ApiField name="prompt_cache_options" type="object" label="提示词缓存选项" sourceUrl={officialUrl} sourceText="prompt_cache_options">
+
+适用于 GPT-5.6 及更新模型。`mode: "implicit"`（默认）自动创建隐式断点，并可写入最多 3 个显式断点。`explicit` 关闭隐式断点，可写入最多 4 个显式断点。请求级 `ttl` 目前仅支持 `30m`。[提示词缓存指南](https://developers.openai.com/api/docs/guides/prompt-caching)
+
+</ApiField>
+
+<ApiField name="prompt_cache_retention" type="string 或 null" label="旧版缓存保留策略" sourceUrl={officialUrl} sourceText="prompt_cache_retention">
+
+已弃用。`in_memory`、`24h` 的可用性取决于模型，当前缓存设置见 `prompt_cache_options.ttl`。
+
+</ApiField>
+
+<ApiField name="reasoning_effort" type="string 或 null" label="推理强度" sourceUrl={officialUrl} sourceText="reasoning_effort">
+
+通用接口列出 `none`、`minimal`、`low`、`medium`、`high`、`xhigh`、`max`。模型各自支持的取值和默认行为见官方指南。[推理模型指南](https://developers.openai.com/api/docs/guides/reasoning)
+
+</ApiField>
+
+<ApiField name="response_format" type="object" label="输出格式" sourceUrl={officialUrl} sourceText="response_format">
+
+控制回复格式。结构化 JSON 仍从 `choices[].message.content` 读取字符串。[结构化输出指南](https://developers.openai.com/api/docs/guides/structured-outputs)
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="输出类型" sourceUrl={officialUrl} sourceText="type" required>
+
+支持 `text`、`json_schema` 或 `json_object`。使用旧版 `json_object` 时，在消息里明确要求输出 JSON。
+
+</ApiField>
+
+<ApiField name="json_schema" type="object" label="结构化输出定义" sourceUrl={officialUrl} sourceText="json_schema" required="conditional">
+
+`type: "json_schema"` 时提供。`name` 为格式名称，`schema` 定义 JSON 结构，`description` 可解释输出用途，`strict` 控制是否严格匹配。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="safety_identifier" type="string 或 null" label="终端用户标识" sourceUrl={officialUrl} sourceText="safety_identifier">
+
+标识应用中的终端用户，最长 128 个字符。可采用用户标识的哈希值。
+
+</ApiField>
+
+<ApiField name="seed" type="integer 或 null" label="采样种子" sourceUrl={officialUrl} sourceText="seed">
+
+同样的种子和参数只提供尽力而为的可复现性。
+
+</ApiField>
+
+<ApiField name="service_tier" type="string 或 null" label="服务层级" sourceUrl={officialUrl} sourceText="service_tier" defaultValue="auto">
+
+支持 `auto`、`default`、`flex`、`scale`、`priority`、`fast`。可用性取决于项目和模型，响应记录实际使用的层级。
+
+</ApiField>
+
+<ApiField name="stop" type="string、string[] 或 null" label="停止序列" sourceUrl={officialUrl} sourceText="stop">
+
+最多 4 个。命中的停止序列不包含在回复中，`o3` 和 `o4-mini` 等模型不支持。
+
+</ApiField>
+
+<ApiField name="store" type="boolean 或 null" label="保存输出" sourceUrl={officialUrl} sourceText="store" defaultValue="false">
+
+控制是否保存本次聊天输出以用于模型蒸馏或评估。
+
+</ApiField>
+
+<ApiField name="stream" type="boolean 或 null" label="流式输出" sourceUrl={officialUrl} sourceText="stream" defaultValue="false">
+
+设置为 `true` 后，通过 SSE 逐块接收 `chat.completion.chunk`。
+
+</ApiField>
+
+<ApiField name="stream_options" type="object 或 null" label="流式选项" sourceUrl={officialUrl} sourceText="stream_options">
+
+仅在 `stream: true` 时设置。
+
+<div className="ark-api-fields">
+
+<ApiField name="include_usage" type="boolean" label="返回用量汇总" sourceUrl={officialUrl} sourceText="include_usage">
+
+开启后，结束标记前额外返回 `choices: []` 的用量数据块。流中断时可能收不到该块。
+
+</ApiField>
+
+<ApiField name="include_obfuscation" type="boolean" label="包含流式填充" sourceUrl={officialUrl} sourceText="include_obfuscation">
+
+流式增量默认包含用于平衡数据块大小的 `obfuscation` 字段。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="temperature" type="number 或 null" label="采样温度" sourceUrl={officialUrl} sourceText="temperature" defaultValue="1">
+
+范围 0–2。建议一次只调整采样温度或 `top_p` 中的一个。
+
+</ApiField>
+
+<ApiField name="tool_choice" type="string 或 object" label="工具选择" sourceUrl={officialUrl} sourceText="tool_choice">
+
+`none` 禁止调用工具，`auto` 由模型决定，`required` 要求至少调用一个工具。`function` 或 `custom` 对象可指定工具，`allowed_tools` 可缩小可选范围。
+
+</ApiField>
+
+<ApiField name="tools" type="object[]" label="工具定义" sourceUrl={officialUrl} sourceText="tools">
+
+每项的 `type` 是 `function` 或 `custom`，并包含对应配置。[OpenAI 函数调用指南](https://developers.openai.com/api/docs/guides/function-calling)
+
+<div className="ark-api-fields">
+
+<ApiField name="function" type="object" label="函数工具定义" sourceUrl={officialUrl} sourceText="function">
+
+用 `name`、`description`、JSON Schema 格式的 `parameters` 和可选的 `strict` 描述函数。
+
+</ApiField>
+
+<ApiField name="custom" type="object" label="自定义工具定义" sourceUrl={officialUrl} sourceText="custom">
+
+用 `name` 和可选的 `description` 命名工具。`format` 可指定 `text` 或 `grammar`，后者使用 `lark` 或 `regex` 语法。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="top_logprobs" type="integer 或 null" label="候选令牌数量" sourceUrl={officialUrl} sourceText="top_logprobs">
+
+每个位置最多返回 0–20 个高概率候选。使用时须将 `logprobs` 设为 `true`。
+
+</ApiField>
+
+<ApiField name="top_p" type="number 或 null" label="核采样概率" sourceUrl={officialUrl} sourceText="top_p" defaultValue="1">
+
+范围 0–1，指定参与采样的累计概率质量。
+
+</ApiField>
+
+<ApiField name="user" type="string 或 null" label="旧版终端用户标识" sourceUrl={officialUrl} sourceText="user">
+
+安全标识改用 `safety_identifier`，提示词缓存归并改用 `prompt_cache_key`。
+
+</ApiField>
+
+<ApiField name="verbosity" type="string 或 null" label="输出详细程度" sourceUrl={officialUrl} sourceText="verbosity" defaultValue="medium">
+
+支持 `low`、`medium`、`high`，实际可用性随模型变化。
+
+</ApiField>
+
+<ApiField name="web_search_options" type="object" label="网页搜索设置" sourceUrl={officialUrl} sourceText="web_search_options">
+
+用于支持 Chat Completions 网页搜索的模型。`search_context_size` 支持 `low`、`medium`（默认）、`high`。`user_location` 使用 `type: "approximate"`，可提供城市、国家、地区和时区。[网页搜索指南](https://developers.openai.com/api/docs/guides/tools-web-search)
+
+</ApiField>
+
+</div>
+
+## 响应参数
+
+### 非流式响应
+
+文本回复位于 `choices[].message.content`。若候选返回 `tool_calls`，客户端按调用记录执行工具，并把原始助手消息和工具结果加入下一次请求的 `messages`。
+
+<div className="ark-api-fields">
+
+<ApiField name="id" type="string" label="完成对象 ID" sourceUrl={officialUrl} sourceText="id">
+
+本次聊天完成对象的唯一标识。
+
+</ApiField>
+
+<ApiField name="object" type="string" label="对象类型" sourceUrl={officialUrl} sourceText="object">
+
+普通 JSON 响应固定为 `chat.completion`。
+
+</ApiField>
+
+<ApiField name="created" type="integer" label="创建时间" sourceUrl={officialUrl} sourceText="created">
+
+Unix 时间戳，单位为秒。
+
+</ApiField>
+
+<ApiField name="model" type="string" label="模型" sourceUrl={officialUrl} sourceText="model">
+
+实际生成本次回复的模型。
+
+</ApiField>
+
+<ApiField name="choices" type="object[]" label="候选回复" sourceUrl={officialUrl} sourceText="choices">
+
+包含候选序号、模型消息和结束原因。流式数据块的结构见下方。
+
+<div className="ark-api-fields">
+
+<ApiField name="index" type="integer" label="候选序号" sourceUrl={officialUrl} sourceText="index">
+
+当前候选在候选列表中的索引。
+
+</ApiField>
+
+<ApiField name="message" type="object" label="模型消息" sourceUrl={officialUrl} sourceText="message">
+
+通常含 `role: "assistant"` 和 `content`。工具调用、音频或拒答也可通过对应字段返回。
+
+<div className="ark-api-fields">
+
+<ApiField name="role" type="string" label="消息角色" sourceUrl={officialUrl} sourceText="role">
+
+固定为 `assistant`。
+
+</ApiField>
+
+<ApiField name="content" type="string 或 null" label="回复正文" sourceUrl={officialUrl} sourceText="content">
+
+助手的文本内容。工具调用时可能为 `null`。结构化 JSON 输出也通过此字段返回文本。
+
+</ApiField>
+
+<ApiField name="refusal" type="string 或 null" label="拒绝说明" sourceUrl={officialUrl} sourceText="refusal">
+
+模型拒绝生成时可能返回此说明。
+
+</ApiField>
+
+<ApiField name="tool_calls" type="object[] 或 null" label="工具调用" sourceUrl={officialUrl} sourceText="tool_calls">
+
+每项返回 `id`、`type` 和与工具类型对应的内容。函数调用用 `function.name` 和 `function.arguments`，后者是 JSON 字符串。自定义工具用 `custom.name` 和 `custom.input`。客户端校验参数、执行工具，再通过 `role: "tool"` 和对应 `tool_call_id` 回传结果。
+
+</ApiField>
+
+<ApiField name="function_call" type="object 或 null" label="旧版函数调用" sourceUrl={officialUrl} sourceText="function_call">
+
+已弃用。旧响应包含 `name` 和 JSON 字符串 `arguments`。
+
+</ApiField>
+
+<ApiField name="annotations" type="object[]" label="引用注释" sourceUrl={officialUrl} sourceText="annotations">
+
+网页引用的 `type` 为 `url_citation`，`url_citation` 包含链接、标题和引用在文本中的起止索引。
+
+</ApiField>
+
+<ApiField name="audio" type="object 或 null" label="音频响应" sourceUrl={officialUrl} sourceText="audio">
+
+支持的输出可含音频 `id`、Base64 `data`、转写文本 `transcript` 和过期时间 `expires_at`（Unix 秒）。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="finish_reason" type="string" label="结束原因" sourceUrl={officialUrl} sourceText="finish_reason">
+
+`stop` 表示自然结束或命中停止序列，`length` 表示达到生成上限，`tool_calls` 表示请求调用工具，`content_filter` 表示部分内容被过滤，`function_call` 为旧版函数结束原因。
+
+</ApiField>
+
+<ApiField name="logprobs" type="object 或 null" label="输出对数概率" sourceUrl={officialUrl} sourceText="logprobs">
+
+支持时，通过 `content` 或 `refusal` 返回每个令牌的 `token`、`logprob`、UTF-8 `bytes` 和 `top_logprobs`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="metadata" type="object 或 null" label="元数据" sourceUrl={officialUrl} sourceText="metadata">
+
+与本次对象关联的键值。
+
+</ApiField>
+
+<ApiField name="moderation" type="object 或 null" label="审核结果" sourceUrl={officialUrl} sourceText="moderation">
+
+启用审核时，`input` 和 `output` 可分别返回审核结果或错误信息。
+
+</ApiField>
+
+<ApiField name="service_tier" type="string 或 null" label="实际服务层级" sourceUrl={officialUrl} sourceText="service_tier">
+
+以响应报告的实际处理层级为准。
+
+</ApiField>
+
+<ApiField name="system_fingerprint" type="string" label="后端配置标识" sourceUrl={officialUrl} sourceText="system_fingerprint">
+
+用于观察后端配置变化。
+
+</ApiField>
+
+<ApiField name="usage" type="object" label="令牌用量" sourceUrl={officialUrl} sourceText="usage">
+
+本次聊天生成的输入、输出和总用量。
+
+<div className="ark-api-fields">
+
+<ApiField name="prompt_tokens" type="integer" label="输入令牌数" sourceUrl={officialUrl} sourceText="prompt_tokens">
+
+请求中的提示词令牌数。
+
+</ApiField>
+
+<ApiField name="completion_tokens" type="integer" label="输出令牌数" sourceUrl={officialUrl} sourceText="completion_tokens">
+
+生成的回复令牌数，包含适用的推理令牌。
+
+</ApiField>
+
+<ApiField name="total_tokens" type="integer" label="总令牌数" sourceUrl={officialUrl} sourceText="total_tokens">
+
+输入与输出令牌数之和。
+
+</ApiField>
+
+<ApiField name="prompt_tokens_details" type="object" label="输入令牌明细" sourceUrl={officialUrl} sourceText="prompt_tokens_details">
+
+可包含 `cached_tokens`、`cache_write_tokens`、`audio_tokens`、`image_tokens` 和 `text_tokens`。
+
+</ApiField>
+
+<ApiField name="completion_tokens_details" type="object" label="输出令牌明细" sourceUrl={officialUrl} sourceText="completion_tokens_details">
+
+可包含 `reasoning_tokens`、`audio_tokens`、`text_tokens`、`accepted_prediction_tokens` 和 `rejected_prediction_tokens` 等分类。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+### 流式响应
+
+`stream: true` 时，服务端通过 SSE 发送多个 `chat.completion.chunk` 对象。同一次响应的块共用 `id`，按 `choices[].index` 分组并按到达顺序追加 `delta.content`。工具调用参数也可能分片，应按候选和工具调用的 `index` 拼接，收齐后再解析。[OpenAI 流式响应参考](https://developers.openai.com/api/reference/resources/chat/subresources/completions/streaming-events)
+
+| 字段或标记 | 读取方式 |
+| --- | --- |
+| `choices[].delta` | 本块新增的角色、文本、工具调用或其他内容。可为空对象。 |
+| `choices[].finish_reason` | 生成中通常为 `null`。结束时可返回 `stop`、`length`、`tool_calls` 等。 |
+| `usage` | 开启 `stream_options.include_usage` 后，最后一个 JSON 块以 `choices: []` 返回汇总用量。 |
+| `data: [DONE]` | 流结束标记。 |
+
+</div>
+<aside className="ark-api-examples" aria-label="接口示例">
+
+## 输入示例
+
+函数回传示例中的 `call_example_weather` 是示例 ID。实际调用时，把原始助手消息加入对话，并在工具消息的 `tool_call_id` 中填入真实调用 ID。
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```sh title="文本生成"
+curl --request POST "${base_url}/v1/chat/completions" \
+  --header "Authorization: Bearer $OPENAI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "gpt-6.2-astra",
+    "messages": [
+      {
+        "role": "developer",
+        "content": "请使用简洁的中文回答。"
+      },
+      {
+        "role": "user",
+        "content": "用一句话解释为什么天空看起来是蓝色的。"
+      }
+    ]
+  }'
+```
+
+```sh title="图片输入"
+curl --request POST "${base_url}/v1/chat/completions" \
+  --header "Authorization: Bearer $OPENAI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "gpt-6.2-astra",
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "请描述图片里步道和周围的环境。"
+          },
+          {
+            "type": "image_url",
+            "image_url": {
+              "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg"
+            }
+          }
+        ]
+      }
+    ],
+    "max_completion_tokens": 1024
+  }'
+```
+
+```sh title="函数调用"
+curl --request POST "${base_url}/v1/chat/completions" \
+  --header "Authorization: Bearer $OPENAI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "gpt-5.6-terra",
+    "reasoning_effort": "none",
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_current_weather",
+          "description": "查询指定城市的当前天气。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string",
+                "description": "城市名称"
+              }
+            },
+            "required": [
+              "city"
+            ],
+            "additionalProperties": false
+          },
+          "strict": true
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "messages": [
+      {
+        "role": "user",
+        "content": "上海今天的天气怎么样？"
+      }
+    ]
+  }'
+```
+
+```sh title="回传工具结果"
+curl --request POST "${base_url}/v1/chat/completions" \
+  --header "Authorization: Bearer $OPENAI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "gpt-5.6-terra",
+    "reasoning_effort": "none",
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "get_current_weather",
+          "description": "查询指定城市的当前天气。",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string",
+                "description": "城市名称"
+              }
+            },
+            "required": [
+              "city"
+            ],
+            "additionalProperties": false
+          },
+          "strict": true
+        }
+      }
+    ],
+    "tool_choice": "auto",
+    "messages": [
+      {
+        "role": "user",
+        "content": "上海今天的天气怎么样？"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_example_weather",
+            "type": "function",
+            "function": {
+              "name": "get_current_weather",
+              "arguments": "{\"city\":\"上海\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_example_weather",
+        "content": "{\"city\":\"上海\",\"temperature_c\":24,\"condition\":\"多云\"}"
+      }
+    ]
+  }'
+```
+
+```sh title="结构化 JSON"
+curl --request POST "${base_url}/v1/chat/completions" \
+  --header "Authorization: Bearer $OPENAI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "gpt-6.2-astra",
+    "messages": [
+      {
+        "role": "user",
+        "content": "从「上海是中国的城市」提取城市和国家。"
+      }
+    ],
+    "response_format": {
+      "type": "json_schema",
+      "json_schema": {
+        "name": "city_record",
+        "strict": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string"
+            },
+            "country": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "city",
+            "country"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  }'
+```
+
+```sh title="对数概率"
+curl --request POST "${base_url}/v1/chat/completions" \
+  --header "Authorization: Bearer $OPENAI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "gpt-6-sol",
+    "messages": [
+      {
+        "role": "user",
+        "content": "用一个词表示同意。"
+      }
+    ],
+    "reasoning_effort": "none",
+    "logprobs": true,
+    "top_logprobs": 2
+  }'
+```
+
+```sh title="流式输出"
+curl --request POST --no-buffer "${base_url}/v1/chat/completions" \
+  --header "Authorization: Bearer $OPENAI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "gpt-6.2-astra",
+    "messages": [
+      {
+        "role": "developer",
+        "content": "请使用简洁的中文回答。"
+      },
+      {
+        "role": "user",
+        "content": "用一句话解释为什么天空看起来是蓝色的。"
+      }
+    ],
+    "stream": true,
+    "stream_options": {
+      "include_usage": true
+    }
+  }'
+```
+
+</CodeTabs>
+</div>
+
+## 输出示例
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```json title="文本响应"
+{
+  "id": "chatcmpl-example-text",
+  "object": "chat.completion",
+  "created": 1794873600,
+  "model": "gpt-6.2-astra",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "因为空气分子更容易散射阳光中的蓝光，使我们从各个方向都能看到蓝色。"
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 27,
+    "completion_tokens": 42,
+    "total_tokens": 69
+  }
+}
+```
+
+```json title="工具调用响应"
+{
+  "id": "chatcmpl-example-tool",
+  "object": "chat.completion",
+  "created": 1794873600,
+  "model": "gpt-5.6-terra",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_example_weather",
+            "type": "function",
+            "function": {
+              "name": "get_current_weather",
+              "arguments": "{\"city\":\"上海\"}"
+            }
+          }
+        ]
+      },
+      "logprobs": null,
+      "finish_reason": "tool_calls"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 82,
+    "completion_tokens": 19,
+    "total_tokens": 101
+  }
+}
+```
+
+```text title="SSE 数据块"
+data: {"id":"chatcmpl-example-stream","object":"chat.completion.chunk","created":1794873600,"model":"gpt-6.2-astra","choices":[{"index":0,"delta":{"role":"assistant","content":""},"logprobs":null,"finish_reason":null}],"usage":null}
+
+data: {"id":"chatcmpl-example-stream","object":"chat.completion.chunk","created":1794873600,"model":"gpt-6.2-astra","choices":[{"index":0,"delta":{"content":"蓝光更容易被空气分子散射，所以天空看起来是蓝色的。"},"logprobs":null,"finish_reason":null}],"usage":null}
+
+data: {"id":"chatcmpl-example-stream","object":"chat.completion.chunk","created":1794873600,"model":"gpt-6.2-astra","choices":[{"index":0,"delta":{},"logprobs":null,"finish_reason":"stop"}],"usage":null}
+
+data: {"id":"chatcmpl-example-stream","object":"chat.completion.chunk","created":1794873600,"model":"gpt-6.2-astra","choices":[],"usage":{"prompt_tokens":27,"completion_tokens":22,"total_tokens":49}}
+
+data: [DONE]
+```
+
+</CodeTabs>
+</div>
+
+</aside>
+</div>
+</div>

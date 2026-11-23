@@ -1,0 +1,1108 @@
+---
+title: Gemini格式
+description: 使用 Gemini 4 Carbon 的 GenerateContent REST API 进行聊天、工具调用和流式输出。
+fullWidth: true
+centered: false
+---
+
+import { ApiField } from "../doubao-video/ApiField";
+
+export const officialUrl = "https://aistudio.google.com/api-reference/generate-content/generate-content";
+export const schemaUrl = "https://aistudio.google.com/api-reference/generate-content";
+export const streamUrl = "https://aistudio.google.com/api-reference/generate-content/stream-generate-content";
+export const authUrl = "https://aistudio.google.com/docs/api-key";
+
+<p className="ark-api-endpoint">
+  <strong>POST</strong>
+  <code apiPath="/v1beta/models/{model}:generateContent" defaultBaseUrl="https://generativelanguage.googleapis.com" />
+</p>
+
+<p className="ark-api-endpoint">
+  <strong>POST</strong>
+  <code apiPath="/v1beta/models/{model}:streamGenerateContent?alt=sse" defaultBaseUrl="https://generativelanguage.googleapis.com" />
+</p>
+
+Gemini 4 Carbon 的模型 ID 是 `gemini-4-carbon`。它在 Gemini API 付费层提供服务，接收文本、图片、视频、音频和 PDF 输入，输出文本。[Gemini 4 Carbon 模型资料](https://aistudio.google.com/docs/models/gemini-4-carbon)
+
+<div className="ark-api-reference">
+<div className="ark-api-columns">
+<div>
+
+## 鉴权
+
+本接口支持以下鉴权方式，详情见 [Gemini 官方鉴权说明](https://aistudio.google.com/docs/api-key)。
+
+- API Key 鉴权。前往 [Google AI Studio API Key 管理](https://aistudio.google.com/apikey) 获取 API Key。
+
+## Carbon 模型限制
+
+| 项目 | 限制 |
+| --- | --- |
+| 上下文窗口 | 输入、思考和输出共享 1,048,576 个令牌 |
+| 直接非流式 REST | 每次调用最多生成 32,768 个令牌 |
+| 流式 REST | 每次流式调用最多生成 65,536 个令牌 |
+| 推理级别 | `low`、`medium`（默认）、`high` |
+| 上下文缓存 | 仅支持隐式缓存 |
+
+[Gemini 4 Carbon 官方指南](https://aistudio.google.com/docs/whats-new-gemini-4-carbon?hl=ja&codelanguage=rest&generate-content=true)
+
+## 请求参数
+
+### 请求头
+
+<div className="ark-api-fields">
+
+<ApiField name="x-goog-api-key" type="string" label="Gemini API Key" sourceUrl={authUrl} sourceText="x-goog-api-key" required>
+
+传入环境变量 `GEMINI_API_KEY` 的值。
+
+</ApiField>
+
+<ApiField name="Content-Type" type="string" label="请求内容类型" sourceUrl={officialUrl} sourceText="Content-Type" required>
+
+请求体使用 `application/json`。
+
+</ApiField>
+
+</div>
+
+### URL 参数
+
+<div className="ark-api-fields">
+
+<ApiField name="model" type="string" label="模型 ID" sourceUrl={officialUrl} sourceText="model" required>
+
+在 URL 的模型位置填写 `gemini-4-carbon`，构成 `models/gemini-4-carbon`。
+
+</ApiField>
+
+<ApiField name="alt" type="string" label="流式传输格式" sourceUrl={streamUrl} sourceText="alt">
+
+使用 `streamGenerateContent` 时设置 `alt=sse`，通过服务器发送事件接收 JSON 数据块。
+
+</ApiField>
+
+</div>
+
+### 请求体
+
+<div className="ark-api-fields">
+
+<ApiField name="contents" type="object[]" label="对话历史与本轮输入" sourceUrl={officialUrl} sourceText="contents" required>
+
+单轮请求通常包含一条用户消息。多轮请求按顺序发送既有历史和新消息，保留服务端返回的工具调用和思考签名。
+
+<div className="ark-api-fields">
+
+<ApiField name="role" type="string" label="消息角色" sourceUrl={schemaUrl} sourceText="role">
+
+`user` 表示用户输入或客户端函数结果，`model` 表示模型先前的消息。
+
+</ApiField>
+
+<ApiField name="parts" type="object[]" label="消息内容块" sourceUrl={schemaUrl} sourceText="parts" required>
+
+同一条消息可包含多个有序内容块。每块按其数据字段区分类型。
+
+<div className="ark-api-fields">
+
+<ApiField name="text" type="string" label="文本" sourceUrl={schemaUrl} sourceText="text">
+
+发送的提示词或模型生成的文本。显示最终回复时，从有 `text` 且 `thought` 不为 `true` 的块取值。
+
+</ApiField>
+
+<ApiField name="inlineData" type="object" label="内联媒体" sourceUrl={schemaUrl} sourceText="inlineData">
+
+直接提交 Base64 编码的媒体字节。
+
+<div className="ark-api-fields">
+
+<ApiField name="mimeType" type="string" label="媒体类型" sourceUrl={schemaUrl} sourceText="mimeType" required>
+
+媒体的 MIME 类型，例如 `image/png` 或 `application/pdf`。
+
+</ApiField>
+
+<ApiField name="data" type="string" label="Base64 数据" sourceUrl={schemaUrl} sourceText="data" required>
+
+只传 Base64 编码内容。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="fileData" type="object" label="文件引用" sourceUrl={schemaUrl} sourceText="fileData">
+
+使用 Gemini Files API 返回的文件 URI，并提供媒体类型。[文件输入指南](https://aistudio.google.com/docs/files?generate-content=true)
+
+<div className="ark-api-fields">
+
+<ApiField name="mimeType" type="string" label="媒体类型" sourceUrl={schemaUrl} sourceText="mimeType" required>
+
+媒体的 MIME 类型，例如 `image/png` 或 `application/pdf`。
+
+</ApiField>
+
+<ApiField name="fileUri" type="string" label="文件 URI" sourceUrl={schemaUrl} sourceText="fileUri" required>
+
+指向已上传文件的服务端 URI。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="functionCall" type="object" label="模型发起的函数调用" sourceUrl={schemaUrl} sourceText="functionCall">
+
+服务端生成。将整条模型消息加入后续对话历史。
+
+<div className="ark-api-fields">
+
+<ApiField name="name" type="string" label="函数名称" sourceUrl={schemaUrl} sourceText="name">
+
+与请求中声明的函数名一致。
+
+</ApiField>
+
+<ApiField name="args" type="object" label="函数参数" sourceUrl={schemaUrl} sourceText="args">
+
+模型生成的 JSON 参数对象。
+
+</ApiField>
+
+<ApiField name="id" type="string" label="函数调用 ID" sourceUrl={schemaUrl} sourceText="id">
+
+服务端有返回时，将此 ID 原样用于对应的 `functionResponse.id`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="functionResponse" type="object" label="客户端函数结果" sourceUrl={schemaUrl} sourceText="functionResponse">
+
+客户端执行函数后，用此类型把结果交给模型。
+
+<div className="ark-api-fields">
+
+<ApiField name="name" type="string" label="函数名称" sourceUrl={schemaUrl} sourceText="name" required>
+
+与对应的 `functionCall.name` 一致。
+
+</ApiField>
+
+<ApiField name="response" type="object" label="函数结果" sourceUrl={schemaUrl} sourceText="response" required>
+
+函数返回的 JSON 对象，可用 `output` 表达成功结果、`error` 表达错误。
+
+</ApiField>
+
+<ApiField name="id" type="string" label="函数调用 ID" sourceUrl={schemaUrl} sourceText="id">
+
+对应调用返回 `id` 时按原值填写。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="thought" type="boolean" label="思考摘要标记" sourceUrl={schemaUrl} sourceText="thought">
+
+`true` 表示该块属于模型返回的思考摘要。
+
+</ApiField>
+
+<ApiField name="thoughtSignature" type="string" label="思考签名" sourceUrl={schemaUrl} sourceText="thoughtSignature">
+
+服务端返回的不透明签名。保留在原有内容块，连同完整历史原样回传。缺失必要签名可能得到 `MISSING_THOUGHT_SIGNATURE` 或请求错误。[思考签名指南](https://aistudio.google.com/docs/thought-signatures?generate-content=true)
+
+</ApiField>
+
+<ApiField name="executableCode" type="object" label="可执行代码" sourceUrl={schemaUrl} sourceText="executableCode">
+
+启用代码执行工具时，响应中可能出现模型生成的代码块。
+
+</ApiField>
+
+<ApiField name="codeExecutionResult" type="object" label="代码执行结果" sourceUrl={schemaUrl} sourceText="codeExecutionResult">
+
+代码执行工具返回的执行结果块。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="systemInstruction" type="object" label="系统指令" sourceUrl={officialUrl} sourceText="systemInstruction">
+
+开发者设置的系统指令，`parts` 中只用文本块。例如 `{"parts":[{"text":"用中文简洁作答。"}]}`。
+
+</ApiField>
+
+<ApiField name="tools" type="object[]" label="工具声明" sourceUrl={officialUrl} sourceText="tools">
+
+支持客户端函数及按模型提供的内置工具。Carbon 可使用 Google 搜索、URL 上下文、文件搜索和代码执行等工具。[工具指南](https://aistudio.google.com/docs/tools?generate-content=true)
+
+<div className="ark-api-fields">
+
+<ApiField name="functionDeclarations" type="object[]" label="客户端函数" sourceUrl={officialUrl} sourceText="functionDeclarations">
+
+用 `name`、`description` 和 `parameters` 或 `parametersJsonSchema` 说明函数和参数结构。
+
+</ApiField>
+
+<ApiField name="googleSearch" type="object" label="Google 搜索" sourceUrl={officialUrl} sourceText="googleSearch">
+
+可用 `{"googleSearch":{}}` 启用搜索，响应可能附带引用来源。
+
+</ApiField>
+
+<ApiField name="urlContext" type="object" label="网页上下文" sourceUrl={officialUrl} sourceText="urlContext">
+
+使用提示词中的 URL 作为上下文时启用。
+
+</ApiField>
+
+<ApiField name="fileSearch" type="object" label="文件搜索" sourceUrl={officialUrl} sourceText="fileSearch">
+
+基于已配置的文件搜索存储检索资料。
+
+</ApiField>
+
+<ApiField name="codeExecution" type="object" label="代码执行" sourceUrl={officialUrl} sourceText="codeExecution">
+
+启用服务端代码执行工具。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="toolConfig" type="object" label="工具配置" sourceUrl={officialUrl} sourceText="toolConfig">
+
+应用到本次请求中的工具。`retrievalConfig` 可为适用的检索工具提供位置和语言信息。
+
+<div className="ark-api-fields">
+
+<ApiField name="functionCallingConfig" type="object" label="函数调用设置" sourceUrl={officialUrl} sourceText="functionCallingConfig">
+
+通过 `mode` 控制是否调用函数。`AUTO`（默认）由模型选择，`ANY` 要求调用，`NONE` 禁止调用，`VALIDATED` 对模型选择的函数调用执行约束验证。`allowedFunctionNames` 仅在 `ANY` 或 `VALIDATED` 模式下使用。[函数调用指南](https://aistudio.google.com/docs/function-calling?generate-content=true)
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="safetySettings" type="object[]" label="安全设置" sourceUrl={officialUrl} sourceText="safetySettings">
+
+逐类别指定安全过滤阈值，同一 `category` 最多出现一次。每项包含 `category` 和 `threshold`。其余类别使用服务端默认设置。[安全设置说明](https://aistudio.google.com/docs/safety-settings?generate-content=true)
+
+</ApiField>
+
+<ApiField name="generationConfig" type="object" label="生成配置" sourceUrl={officialUrl} sourceText="generationConfig">
+
+控制 Carbon 的输出长度、推理级别及结构化输出。REST JSON 字段使用驼峰命名。
+
+<div className="ark-api-fields">
+
+<ApiField name="maxOutputTokens" type="integer" label="输出令牌预算" sourceUrl={officialUrl} sourceText="maxOutputTokens">
+
+包含可见输出和思考令牌。Carbon 直接非流式 REST 单次默认 32,768，流式单次默认 65,536。长输出的预算在续写过程中累计。
+
+</ApiField>
+
+<ApiField name="thinkingConfig" type="object" label="思考设置" sourceUrl={officialUrl} sourceText="thinkingConfig">
+
+控制推理深度及是否返回可用的思考摘要。[Gemini 思考指南](https://aistudio.google.com/docs/thinking?generate-content=true)
+
+<div className="ark-api-fields">
+
+<ApiField name="thinkingLevel" type="string" label="推理级别" sourceUrl={officialUrl} sourceText="thinkingLevel" defaultValue="medium">
+
+Carbon 支持 `low`、`medium`、`high`，分别适用于较轻、常规和复杂任务。
+
+</ApiField>
+
+<ApiField name="includeThoughts" type="boolean" label="返回思考摘要" sourceUrl={officialUrl} sourceText="includeThoughts">
+
+设置为 `true`，服务端在可用时返回思考摘要。
+
+</ApiField>
+
+<ApiField name="thinkingBudget" type="integer" label="旧版思考预算" sourceUrl={officialUrl} sourceText="thinkingBudget">
+
+Carbon 会将该字段映射到最接近的 `thinkingLevel` 并返回警告。Carbon 请求使用 `thinkingLevel`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="stopSequences" type="string[]" label="停止序列" sourceUrl={officialUrl} sourceText="stopSequences">
+
+指定最多 5 个文本停止序列。匹配到的停止文本不包含在输出中。
+
+</ApiField>
+
+<ApiField name="responseMimeType" type="string" label="文本响应 MIME 类型" sourceUrl={officialUrl} sourceText="responseMimeType" defaultValue="text/plain">
+
+默认 `text/plain`。结构化 JSON 使用 `application/json`。
+
+</ApiField>
+
+<ApiField name="responseJsonSchema" type="object" label="JSON Schema" sourceUrl={officialUrl} sourceText="responseJsonSchema">
+
+与 `responseMimeType: "application/json"` 配合使用。JSON 内容仍通过文本块中的 `text` 返回，需要再解析一次。[结构化输出指南](https://aistudio.google.com/docs/structured-output?generate-content=true)
+
+</ApiField>
+
+<ApiField name="responseModalities" type="string[]" label="输出模态" sourceUrl={officialUrl} sourceText="responseModalities">
+
+Carbon 输出为文本，使用 `TEXT` 或省略此字段。
+
+</ApiField>
+
+<ApiField name="mediaResolution" type="string" label="输入媒体分辨率" sourceUrl={officialUrl} sourceText="mediaResolution">
+
+用于控制多模态输入的处理分辨率。取值和支持情况见官方媒体分辨率文档。
+
+</ApiField>
+
+<ApiField name="temperature" type="number" label="旧版采样温度" sourceUrl={officialUrl} sourceText="temperature">
+
+Carbon 忽略此采样参数，迁移时省略。
+
+</ApiField>
+
+<ApiField name="topP" type="number" label="旧版核采样概率" sourceUrl={officialUrl} sourceText="topP">
+
+Carbon 忽略此采样参数，迁移时省略。
+
+</ApiField>
+
+<ApiField name="topK" type="integer" label="旧版候选采样范围" sourceUrl={officialUrl} sourceText="topK">
+
+Carbon 忽略此采样参数，迁移时省略。
+
+</ApiField>
+
+<ApiField name="candidateCount" type="integer" label="旧版候选数量" sourceUrl={officialUrl} sourceText="candidateCount">
+
+Carbon 迁移指南要求移除此字段。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="cachedContent" type="string" label="显式缓存引用" sourceUrl={officialUrl} sourceText="cachedContent">
+
+通用接口支持通过 `cachedContents/{id}` 引用缓存。Carbon 仅支持隐式缓存，传入此字段会报错。有效提示词达到 4,096 个令牌时可触发隐式缓存。
+
+</ApiField>
+
+<ApiField name="serviceTier" type="string" label="服务层级" sourceUrl={officialUrl} sourceText="serviceTier">
+
+通用接口列出 `unspecified`、`standard`、`flex`、`priority`，实际可用性随模型和项目而定。
+
+</ApiField>
+
+<ApiField name="store" type="boolean" label="日志记录设置" sourceUrl={officialUrl} sourceText="store">
+
+为本次请求覆盖项目级日志记录设置。
+
+</ApiField>
+
+<ApiField name="continuationToken" type="string" label="长输出续写令牌" sourceUrl={officialUrl} sourceText="continuationToken">
+
+取上一段响应中 `candidates[i].continuationToken` 的不透明值。设置该字段时，`contents` 必须与初始请求完全一致。若因 `MAX_TOKENS` 停止并返回了令牌，续写时需要提高 `maxOutputTokens`。[长输出指南](https://aistudio.google.com/docs/long-decode?generate-content=true)
+
+</ApiField>
+
+<ApiField name="labels" type="object" label="请求标签" sourceUrl={officialUrl} sourceText="labels">
+
+由字符串键值组成，供用户自定义元数据。聚合服务可按官方接口规范使用 `safety_identifier` 作为标签键。
+
+</ApiField>
+
+</div>
+
+## 响应参数
+
+从 `candidates[].content.parts[]` 中读取回复。使用 `alt=sse` 时，每个 `data:` 块都是一个 `GenerateContentResponse`。客户端应按候选序号和到达顺序合并文本片段，并读取结束原因和令牌用量。[流式接口参考](https://aistudio.google.com/api-reference/generate-content/stream-generate-content)
+
+<div className="ark-api-fields">
+
+<ApiField name="candidates" type="object[]" label="候选回答" sourceUrl={officialUrl} sourceText="candidates">
+
+模型生成的候选响应。如果输入被阻止，查看 `promptFeedback`。流式请求中，同一候选的内容可能分布在多个数据块中。
+
+<div className="ark-api-fields">
+
+<ApiField name="index" type="integer" label="候选序号" sourceUrl={officialUrl} sourceText="index">
+
+候选在响应中的序号，可用于合并流式数据。
+
+</ApiField>
+
+<ApiField name="content" type="object" label="模型消息" sourceUrl={officialUrl} sourceText="content">
+
+通常为 `role: "model"` 和 `parts`。从文本块读取最终回复，保留其他块及签名以便回传。
+
+<div className="ark-api-fields">
+
+<ApiField name="parts" type="object[]" label="输出内容块" sourceUrl={officialUrl} sourceText="parts">
+
+包含 `text`、`functionCall` 等。过滤 `thought: true` 即可分开显示思考摘要和正文。
+
+</ApiField>
+
+<ApiField name="role" type="string" label="消息角色" sourceUrl={officialUrl} sourceText="role">
+
+模型消息为 `model`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="finishReason" type="string" label="停止原因" sourceUrl={officialUrl} sourceText="finishReason">
+
+`STOP` 表示正常结束或命中停止序列，`MAX_TOKENS` 表示用完配置的预算，`CONTINUATION` 表示达到单次上限且可以续写。`SAFETY`、`RECITATION`、`MALFORMED_FUNCTION_CALL` 和 `MISSING_THOUGHT_SIGNATURE` 等用于描述其他停止原因。尚未停止的流式块可省略此字段。
+
+</ApiField>
+
+<ApiField name="finishMessage" type="string" label="停止说明" sourceUrl={officialUrl} sourceText="finishMessage">
+
+服务端对停止原因提供的补充文字。
+
+</ApiField>
+
+<ApiField name="continuationToken" type="string" label="续写令牌" sourceUrl={officialUrl} sourceText="continuationToken">
+
+将同一候选的此值放进后续请求顶层 `continuationToken`。续写段可能只返回思考用量和令牌，正文可以为空。
+
+</ApiField>
+
+<ApiField name="safetyRatings" type="object[]" label="候选安全评级" sourceUrl={officialUrl} sourceText="safetyRatings">
+
+可包含 `category`、`probability` 和 `blocked`。
+
+</ApiField>
+
+<ApiField name="citationMetadata" type="object" label="引用信息" sourceUrl={officialUrl} sourceText="citationMetadata">
+
+`citationSources` 可包含对应文本范围、来源 URI 及许可。
+
+</ApiField>
+
+<ApiField name="tokenCount" type="integer" label="候选令牌数" sourceUrl={officialUrl} sourceText="tokenCount">
+
+候选输出的令牌数量。
+
+</ApiField>
+
+<ApiField name="groundingAttributions" type="object[]" label="来源归因" sourceUrl={officialUrl} sourceText="groundingAttributions">
+
+模型输出引用的原始资料及其来源标识。
+
+</ApiField>
+
+<ApiField name="groundingMetadata" type="object" label="检索引用信息" sourceUrl={officialUrl} sourceText="groundingMetadata">
+
+可能包含 `groundingChunks`、`groundingSupports`、`webSearchQueries`、`searchEntryPoint` 等。
+
+</ApiField>
+
+<ApiField name="avgLogprobs" type="number" label="平均对数概率" sourceUrl={officialUrl} sourceText="avgLogprobs">
+
+在模型支持并返回时提供。
+
+</ApiField>
+
+<ApiField name="logprobsResult" type="object" label="逐令牌对数概率" sourceUrl={officialUrl} sourceText="logprobsResult">
+
+在模型支持并返回时提供。
+
+</ApiField>
+
+<ApiField name="urlContextMetadata" type="object" label="URL 上下文信息" sourceUrl={officialUrl} sourceText="urlContextMetadata">
+
+启用网页上下文工具时，`urlMetadata` 可含 `retrievedUrl` 和 `urlRetrievalStatus`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="promptFeedback" type="object" label="提示词反馈" sourceUrl={officialUrl} sourceText="promptFeedback">
+
+输入的拦截原因和安全评级。流式返回中只在第一个数据块可能出现。
+
+<div className="ark-api-fields">
+
+<ApiField name="blockReason" type="string" label="拦截原因" sourceUrl={officialUrl} sourceText="blockReason">
+
+说明输入在哪类检查中被阻止。
+
+</ApiField>
+
+<ApiField name="safetyRatings" type="object[]" label="输入安全评级" sourceUrl={officialUrl} sourceText="safetyRatings">
+
+提示词的分项安全评级。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="usageMetadata" type="object" label="令牌用量" sourceUrl={officialUrl} sourceText="usageMetadata">
+
+包含输入、候选、思考、工具提示及缓存用量。
+
+<div className="ark-api-fields">
+
+<ApiField name="promptTokenCount" type="integer" label="输入令牌数" sourceUrl={officialUrl} sourceText="promptTokenCount">
+
+输入提示词的令牌数，包含命中的缓存部分。
+
+</ApiField>
+
+<ApiField name="cachedContentTokenCount" type="integer" label="缓存命中令牌数" sourceUrl={officialUrl} sourceText="cachedContentTokenCount">
+
+从缓存复用的输入令牌数。
+
+</ApiField>
+
+<ApiField name="candidatesTokenCount" type="integer" label="候选输出令牌数" sourceUrl={officialUrl} sourceText="candidatesTokenCount">
+
+所有候选输出使用的令牌总数。
+
+</ApiField>
+
+<ApiField name="toolUsePromptTokenCount" type="integer" label="工具提示令牌数" sourceUrl={officialUrl} sourceText="toolUsePromptTokenCount">
+
+本次工具调用提示词使用的令牌数。
+
+</ApiField>
+
+<ApiField name="thoughtsTokenCount" type="integer" label="思考令牌数" sourceUrl={officialUrl} sourceText="thoughtsTokenCount">
+
+思考模型用于推理的令牌数。
+
+</ApiField>
+
+<ApiField name="totalTokenCount" type="integer" label="总令牌数" sourceUrl={officialUrl} sourceText="totalTokenCount">
+
+本次请求报告的总令牌用量。
+
+</ApiField>
+
+<ApiField name="promptTokensDetails" type="object[]" label="输入模态明细" sourceUrl={officialUrl} sourceText="promptTokensDetails">
+
+按 `modality` 提供输入的 `tokenCount`。
+
+</ApiField>
+
+<ApiField name="cacheTokensDetails" type="object[]" label="缓存模态明细" sourceUrl={officialUrl} sourceText="cacheTokensDetails">
+
+按模态提供缓存部分的令牌数。
+
+</ApiField>
+
+<ApiField name="candidatesTokensDetails" type="object[]" label="输出模态明细" sourceUrl={officialUrl} sourceText="candidatesTokensDetails">
+
+按模态提供候选输出的令牌数。
+
+</ApiField>
+
+<ApiField name="toolUsePromptTokensDetails" type="object[]" label="工具提示模态明细" sourceUrl={officialUrl} sourceText="toolUsePromptTokensDetails">
+
+按模态提供工具提示词的令牌数。
+
+</ApiField>
+
+<ApiField name="serviceTier" type="string" label="实际服务层级" sourceUrl={officialUrl} sourceText="serviceTier">
+
+响应实际使用的服务层级。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="modelVersion" type="string" label="模型版本" sourceUrl={officialUrl} sourceText="modelVersion">
+
+生成响应的模型版本。
+
+</ApiField>
+
+<ApiField name="responseId" type="string" label="响应 ID" sourceUrl={officialUrl} sourceText="responseId">
+
+该响应的唯一标识。
+
+</ApiField>
+
+<ApiField name="modelStatus" type="object" label="模型状态" sourceUrl={officialUrl} sourceText="modelStatus">
+
+可包含 `modelStage`、`retirementTime` 和说明 `message`。
+
+</ApiField>
+
+</div>
+
+## 长输出与续写
+
+需要跨过单次输出上限时，可从流式请求开始，设置高于 65,536 的 `maxOutputTokens`，且不得超过上下文窗口减去输入令牌数。收到 `CONTINUATION` 后，保留原始输入和已接收的输出，把该候选的 `continuationToken` 放入下一次请求。按顺序拼接各段的正文，直到收到终止原因。续写请求维持或提高原有总预算。若返回 `MAX_TOKENS` 并附带令牌，须先提高总预算才可继续。
+
+流式连接中断时，使用最近的续写检查点恢复，丢弃该检查点之后尚未确认的片段，避免重复追加文本。[Google 长输出指南](https://aistudio.google.com/docs/long-decode?generate-content=true)
+
+</div>
+<aside className="ark-api-examples" aria-label="接口示例">
+
+## 输入示例
+
+文件示例的 `fileUri` 使用上传后返回的 URI。回传函数结果时，用上一次的完整 `candidates[0].content` 替换示例中的 `model` 消息。若 `functionCall` 含 `id`，也需在对应的 `functionResponse.id` 填入相同值。续写示例须使用上一段响应中的真实令牌。
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```sh title="文本生成"
+curl --request POST "${base_url}/v1beta/models/gemini-4-carbon:generateContent" \
+  --header "x-goog-api-key: $GEMINI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "用两句话解释为什么天空看起来是蓝色的。"
+          }
+        ]
+      }
+    ],
+    "generationConfig": {
+      "maxOutputTokens": 32768,
+      "thinkingConfig": {
+        "thinkingLevel": "medium"
+      }
+    }
+  }'
+```
+
+```sh title="多轮对话"
+curl --request POST "${base_url}/v1beta/models/gemini-4-carbon:generateContent" \
+  --header "x-goog-api-key: $GEMINI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "systemInstruction": {
+      "parts": [
+        {
+          "text": "用清楚、简短的中文回答。"
+        }
+      ]
+    },
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "什么是提示词？"
+          }
+        ]
+      },
+      {
+        "role": "model",
+        "parts": [
+          {
+            "text": "提示词是交给模型的任务描述或问题。"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "给我一个用于总结会议的例子。"
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+```sh title="文件输入"
+curl --request POST "${base_url}/v1beta/models/gemini-4-carbon:generateContent" \
+  --header "x-goog-api-key: $GEMINI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "概括这个 PDF 的主要内容。"
+          },
+          {
+            "fileData": {
+              "mimeType": "application/pdf",
+              "fileUri": "https://generativelanguage.googleapis.com/v1beta/files/FILE_ID"
+            }
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+```sh title="结构化 JSON"
+curl --request POST "${base_url}/v1beta/models/gemini-4-carbon:generateContent" \
+  --header "x-goog-api-key: $GEMINI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "从句子「上海是中国的城市」提取城市和国家。"
+          }
+        ]
+      }
+    ],
+    "generationConfig": {
+      "responseMimeType": "application/json",
+      "responseJsonSchema": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "city",
+          "country"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }'
+```
+
+```sh title="函数调用"
+curl --request POST "${base_url}/v1beta/models/gemini-4-carbon:generateContent" \
+  --header "x-goog-api-key: $GEMINI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "上海今天天气怎么样？"
+          }
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "functionDeclarations": [
+          {
+            "name": "get_weather",
+            "description": "查询指定城市的天气。",
+            "parameters": {
+              "type": "OBJECT",
+              "properties": {
+                "city": {
+                  "type": "STRING"
+                }
+              },
+              "required": [
+                "city"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "toolConfig": {
+      "functionCallingConfig": {
+        "mode": "ANY",
+        "allowedFunctionNames": [
+          "get_weather"
+        ]
+      }
+    }
+  }'
+```
+
+```sh title="回传函数结果"
+curl --request POST "${base_url}/v1beta/models/gemini-4-carbon:generateContent" \
+  --header "x-goog-api-key: $GEMINI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "上海今天天气怎么样？"
+          }
+        ]
+      },
+      {
+        "role": "model",
+        "parts": [
+          {
+            "functionCall": {
+              "name": "get_weather",
+              "args": {
+                "city": "上海"
+              }
+            },
+            "thoughtSignature": "SIGNATURE_FROM_MODEL_RESPONSE"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "parts": [
+          {
+            "functionResponse": {
+              "name": "get_weather",
+              "response": {
+                "output": {
+                  "city": "上海",
+                  "temperatureC": 24,
+                  "condition": "多云"
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "functionDeclarations": [
+          {
+            "name": "get_weather",
+            "description": "查询指定城市的天气。",
+            "parameters": {
+              "type": "OBJECT",
+              "properties": {
+                "city": {
+                  "type": "STRING"
+                }
+              },
+              "required": [
+                "city"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+```sh title="流式输出"
+curl --request POST --no-buffer "${base_url}/v1beta/models/gemini-4-carbon:streamGenerateContent?alt=sse" \
+  --header "x-goog-api-key: $GEMINI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "用两句话解释为什么天空看起来是蓝色的。"
+          }
+        ]
+      }
+    ],
+    "generationConfig": {
+      "thinkingConfig": {
+        "thinkingLevel": "low"
+      }
+    }
+  }'
+```
+
+```sh title="长输出"
+curl --request POST --no-buffer "${base_url}/v1beta/models/gemini-4-carbon:streamGenerateContent?alt=sse" \
+  --header "x-goog-api-key: $GEMINI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "撰写一份详细的公共图书馆服务评估手册，按章节说明指标设计、问卷方法和数据分析。"
+          }
+        ]
+      }
+    ],
+    "generationConfig": {
+      "maxOutputTokens": 131072,
+      "thinkingConfig": {
+        "thinkingLevel": "high"
+      }
+    }
+  }'
+```
+
+```sh title="续写"
+curl --request POST --no-buffer "${base_url}/v1beta/models/gemini-4-carbon:streamGenerateContent?alt=sse" \
+  --header "x-goog-api-key: $GEMINI_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "撰写一份详细的公共图书馆服务评估手册，按章节说明指标设计、问卷方法和数据分析。"
+          }
+        ]
+      }
+    ],
+    "generationConfig": {
+      "maxOutputTokens": 131072,
+      "thinkingConfig": {
+        "thinkingLevel": "high"
+      }
+    },
+    "continuationToken": "TOKEN_FROM_PREVIOUS_RESPONSE"
+  }'
+```
+
+</CodeTabs>
+</div>
+
+## 输出示例
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```json title="文本响应"
+{
+  "candidates": [
+    {
+      "index": 0,
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "阳光进入大气后，较短波长的蓝光更容易被空气分子散射。来自各个方向的散射光让天空看起来是蓝色的。"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 22,
+    "candidatesTokenCount": 35,
+    "thoughtsTokenCount": 12,
+    "totalTokenCount": 69
+  },
+  "modelVersion": "gemini-4-carbon"
+}
+```
+
+```json title="函数调用响应"
+{
+  "candidates": [
+    {
+      "index": 0,
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "functionCall": {
+              "name": "get_weather",
+              "args": {
+                "city": "上海"
+              }
+            },
+            "thoughtSignature": "SIGNATURE_FROM_MODEL_RESPONSE"
+          }
+        ]
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 41,
+    "candidatesTokenCount": 17,
+    "thoughtsTokenCount": 12,
+    "totalTokenCount": 70
+  },
+  "modelVersion": "gemini-4-carbon"
+}
+```
+
+```text title="SSE 数据块"
+data: {"candidates":[{"index":0,"content":{"role":"model","parts":[{"text":"蓝光更容易被空气分子散射。"}]}}],"modelVersion":"gemini-4-carbon"}
+
+data: {"candidates":[{"index":0,"content":{"role":"model","parts":[{"text":"因此我们从不同方向看到的天空偏蓝。"}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":22,"candidatesTokenCount":29,"thoughtsTokenCount":10,"totalTokenCount":61},"modelVersion":"gemini-4-carbon"}
+```
+
+```json title="续写令牌"
+{
+  "candidates": [
+    {
+      "index": 0,
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      "finishReason": "CONTINUATION",
+      "continuationToken": "TOKEN_FROM_PREVIOUS_RESPONSE"
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 80,
+    "candidatesTokenCount": 0,
+    "thoughtsTokenCount": 65536,
+    "totalTokenCount": 65616
+  },
+  "modelVersion": "gemini-4-carbon"
+}
+```
+
+</CodeTabs>
+</div>
+
+</aside>
+</div>
+</div>

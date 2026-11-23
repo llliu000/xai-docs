@@ -1,0 +1,312 @@
+---
+title: 查询素材资产列表
+description: ListAssets 请求参数、响应结构和示例。
+fullWidth: true
+centered: false
+---
+
+import { ApiField } from "../doubao-video/ApiField";
+
+export const officialUrl = "https://ark.volcengine.com/region:cn-beijing/docs/list-assets-api";
+
+<p className="ark-api-endpoint">
+  <strong>POST</strong>
+  <code apiPath="/api/v3/asset/?Action=ListAssets&Version=2024-01-01" defaultBaseUrl="${ARK_ASSET_BASE_URL}" exampleBaseUrl="${ARK_ASSET_BASE_URL%/}" />
+</p>
+
+按素材组类型、组 ID、名称或处理状态筛选素材，并分页查看素材信息。
+
+账号级限流为 10 QPS。
+
+<div className="ark-api-reference">
+<div className="ark-api-columns">
+<div>
+
+## 鉴权
+
+本接口支持以下鉴权方式，详情见 [素材资产 API 鉴权](https://docs.volcengine.com/docs/ark/private-virtual-avatar-library-guide-preview?lang=zh)。
+
+- API Key 鉴权适用于本文的素材网关示例。前往 [API Key 管理](https://ark.volcengine.com/region:cn-beijing/apiKey) 获取长效 API Key。直连官方素材接口使用 AK/SK 签名，前往 [Access Key 管理](https://console.volcengine.com/iam/keymanage) 获取访问密钥。
+
+---
+
+## 请求参数
+
+### Body 参数
+
+<div className="ark-api-fields">
+<ApiField name="Filter" type="object" label="过滤条件" sourceUrl={officialUrl} required>
+
+指定素材组类型，可结合名称和素材组 ID 缩小查询范围。
+
+<div className="ark-api-fields">
+<ApiField name="GroupType" type="string" label="素材组类型" sourceUrl={officialUrl} sourceText="Filter.GroupType" required>
+
+`AIGC` 为虚拟人像素材，`LivenessFace` 为真人素材。
+
+</ApiField>
+
+<ApiField name="GroupIds" type="string[]" label="素材组 ID 列表" sourceUrl={officialUrl} sourceText="Filter.GroupIds">
+
+限制查询范围的素材组标识列表。
+
+</ApiField>
+
+<ApiField name="Name" type="string" label="素材名称" sourceUrl={officialUrl} sourceText="Filter.Name">
+
+按名称筛选，输入上限为 64 个字符。
+
+</ApiField>
+
+<ApiField name="Statuses" type="string[]" label="状态筛选" sourceUrl={officialUrl} sourceText="Filter.Statuses">
+
+可以按 `Active`、`Processing` 和 `Failed` 筛选。
+
+</ApiField>
+</div>
+
+</ApiField>
+
+<ApiField name="NextToken" type="string" label="翻页凭证" sourceUrl={officialUrl}>
+
+首次游标请求省略此字段。查询下一页时原样传回上一页返回的 `NextToken`。不能和 `PageNumber`、`PageSize` 混用。
+
+</ApiField>
+
+<ApiField name="MaxResults" type="integer" label="每页记录数" sourceUrl={officialUrl} defaultValue="10">
+
+游标分页的每页上限，范围为 1–100。首次或后续请求省略时为 10。不能和页码分页参数混用。
+
+</ApiField>
+
+<ApiField name="SortBy" type="string" label="排序字段" sourceUrl={officialUrl} defaultValue="CreateTime">
+
+支持 `CreateTime`、`UpdateTime` 和 `GroupId`。
+
+</ApiField>
+
+<ApiField name="SortOrder" type="string" label="排序顺序" sourceUrl={officialUrl} defaultValue="Desc">
+
+`Asc` 表示升序，`Desc` 表示降序。
+
+</ApiField>
+
+<ApiField name="ProjectName" type="string" label="所属项目" sourceUrl={officialUrl} defaultValue="default">
+
+资源所在的项目。若资源属于非默认项目，传入实际项目名。
+
+</ApiField>
+
+<ApiField name="PageNumber" type="integer" label="页码" sourceUrl={officialUrl}>
+
+从 1 开始。使用页码时不能同传 `NextToken` 或 `MaxResults`。当 `PageSize × PageNumber` 超过 20000 时，改用游标分页。
+
+</ApiField>
+
+<ApiField name="PageSize" type="integer" label="每页记录数" sourceUrl={officialUrl}>
+
+页码分页时的每页大小，范围为 1–100。当 `PageSize × PageNumber` 超过 20000 时，改用游标分页。
+
+</ApiField>
+</div>
+
+## 响应参数
+
+接口业务字段位于 `Result` 中。`ResponseMetadata` 包含请求元信息。
+
+<div className="ark-api-fields">
+<ApiField name="Items" type="object[]" label="素材列表" sourceUrl={officialUrl}>
+
+符合筛选条件的素材。无匹配结果时为空数组。
+
+<div className="ark-api-fields">
+<ApiField name="AssetType" type="string" label="素材类型" sourceUrl={officialUrl} sourceText="Items.AssetType">
+
+`Image` 表示图像，`Video` 表示视频，`Audio` 表示音频。
+
+</ApiField>
+
+<ApiField name="CreateTime" type="string" label="创建时间" sourceUrl={officialUrl} sourceText="Items.CreateTime">
+
+资源创建的时间。
+
+</ApiField>
+
+<ApiField name="Error" type="object" label="错误信息" sourceUrl={officialUrl} sourceText="Items.Error">
+
+素材处理失败时返回。具体处理错误及建议见此接口的官方说明。
+
+<div className="ark-api-fields">
+<ApiField name="Code" type="string" label="错误码" sourceUrl={officialUrl} sourceText="Items.Error.Code">
+
+失败原因的机器可读标识。完整错误码和排查方向见[查询素材资产信息](/doubao-assets/get-asset-api)中的 `Error.Code`。
+
+</ApiField>
+
+<ApiField name="Message" type="string" label="错误信息" sourceUrl={officialUrl} sourceText="Items.Error.Message">
+
+错误的说明，用于定位处理失败的原因。
+
+</ApiField>
+</div>
+
+</ApiField>
+
+<ApiField name="GroupId" type="string" label="所属素材组 ID" sourceUrl={officialUrl} sourceText="Items.GroupId">
+
+该素材关联的素材组标识。
+
+</ApiField>
+
+<ApiField name="Id" type="string" label="素材 ID" sourceUrl={officialUrl} sourceText="Items.Id">
+
+该素材的唯一标识。
+
+</ApiField>
+
+<ApiField name="LastInferenceTime" type="string" label="最近推理时间" sourceUrl={officialUrl} sourceText="Items.LastInferenceTime">
+
+最近一次成功提交使用该素材的视频任务的时间，采用秒级 RFC 3339 格式。任务执行结果不影响该值，更新可能延迟 1–2 分钟。若素材在 2026 年 7 月 24 日之后未被任务调用，响应省略此字段。
+
+</ApiField>
+
+<ApiField name="Moderation" type="object" label="内容审核" sourceUrl={officialUrl} sourceText="Items.Moderation">
+
+素材的审核配置。
+
+<div className="ark-api-fields">
+<ApiField name="Strategy" type="string" label="审核策略" sourceUrl={officialUrl} sourceText="Items.Moderation.Strategy">
+
+返回 `Default`。
+
+</ApiField>
+</div>
+
+</ApiField>
+
+<ApiField name="Name" type="string" label="素材名称" sourceUrl={officialUrl} sourceText="Items.Name">
+
+素材名称，最多 64 个字符。
+
+</ApiField>
+
+<ApiField name="ProjectName" type="string" label="所属项目" sourceUrl={officialUrl} sourceText="Items.ProjectName">
+
+服务返回的资源所属项目。
+
+</ApiField>
+
+<ApiField name="Status" type="string" label="素材状态" sourceUrl={officialUrl} sourceText="Items.Status">
+
+| 状态 | 含义 |
+| --- | --- |
+| `Active` | 预处理完成，可以在视频生成中使用。 |
+| `Processing` | 正在预处理。 |
+| `Failed` | 预处理失败，查看 `Error` 了解原因。 |
+
+</ApiField>
+
+<ApiField name="UpdateTime" type="string" label="更新时间" sourceUrl={officialUrl} sourceText="Items.UpdateTime">
+
+资源最近更新的时间。
+
+</ApiField>
+
+<ApiField name="URL" type="string" label="访问地址" sourceUrl={officialUrl} sourceText="Items.URL">
+
+供下载的素材地址，有效期为 12 小时。
+
+</ApiField>
+</div>
+
+</ApiField>
+
+<ApiField name="NextToken" type="string" label="下一页翻页凭证" sourceUrl={officialUrl}>
+
+仅在游标分页还有下一页时返回。省略时表示遍历结束。
+
+</ApiField>
+
+<ApiField name="PageNumber" type="integer" label="页码" sourceUrl={officialUrl}>
+
+仅在页码分页中返回当前页码。
+
+</ApiField>
+
+<ApiField name="PageSize" type="integer" label="每页记录数" sourceUrl={officialUrl}>
+
+仅在页码分页中返回，每页记录数为 1–100。
+
+</ApiField>
+
+<ApiField name="TotalCount" type="integer" label="总数" sourceUrl={officialUrl}>
+
+仅在页码分页中返回符合条件的记录总数。
+
+</ApiField>
+</div>
+
+更多详情内容请见[火山官方文档](https://ark.volcengine.com/region:cn-beijing/docs/list-assets-api)。
+
+</div>
+<aside className="ark-api-examples" aria-label="接口示例">
+
+## 输入示例
+
+未配置站点基础地址时，将 `ARK_ASSET_BASE_URL` 设置为支持 Bearer 鉴权的素材网关地址，通过 `ARK_API_KEY` 提供凭证。直连火山方舟官方素材接口 `https://ark.cn-beijing.volcengineapi.com` 时，使用 AK/SK 签名。
+
+```sh title="cURL"
+curl --fail-with-body --request POST \
+  --url "${base_url}/api/v3/asset/?Action=ListAssets&Version=2024-01-01" \
+  --header "Authorization: Bearer $ARK_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+  "Filter": {
+    "GroupType": "AIGC",
+    "GroupIds": [
+      "group-20261122123000-demo"
+    ],
+    "Statuses": [
+      "Active"
+    ]
+  },
+  "MaxResults": 10,
+  "ProjectName": "default"
+}'
+```
+
+## 输出示例
+
+```json
+{
+  "ResponseMetadata": {
+    "RequestId": "example-request-id",
+    "Action": "ListAssets",
+    "Version": "2024-01-01",
+    "Service": "ark",
+    "Region": "cn-beijing"
+  },
+  "Result": {
+    "Items": [
+      {
+        "Id": "asset-20261122123100-demo",
+        "Name": "demo-portrait-image",
+        "GroupId": "group-20261122123000-demo",
+        "AssetType": "Image",
+        "ProjectName": "default",
+        "Status": "Active",
+        "URL": "https://example.com/asset.png",
+        "CreateTime": "2026-11-22T04:31:00Z",
+        "UpdateTime": "2026-11-22T04:31:15Z",
+        "Moderation": {
+          "Strategy": "Default"
+        }
+      }
+    ]
+  }
+}
+```
+
+</aside>
+</div>
+</div>

@@ -1,0 +1,131 @@
+---
+title: 创建素材资产
+description: CreateAsset 请求参数、响应结构和示例。
+fullWidth: true
+centered: false
+---
+
+import { ApiField } from "../doubao-video/ApiField";
+
+export const officialUrl = "https://ark.volcengine.com/region:cn-beijing/docs/create-asset-api";
+
+<p className="ark-api-endpoint">
+  <strong>POST</strong>
+  <code apiPath="/api/v3/asset/?Action=CreateAsset&Version=2024-01-01" defaultBaseUrl="${ARK_ASSET_BASE_URL}" exampleBaseUrl="${ARK_ASSET_BASE_URL%/}" />
+</p>
+
+将公网可访问的图像、视频或音频注册到已有素材组。接口返回素材 ID 后，可用[查询素材资产信息](/doubao-assets/get-asset-api)查看处理状态，待状态为 `Active` 后用于视频生成。
+
+账号限流取决于购买的权益，具体以[官方指南](https://docs.volcengine.com/docs/ark/private-virtual-avatar-library-guide-preview?lang=zh)中的限流要求为准。
+
+<div className="ark-api-reference">
+<div className="ark-api-columns">
+<div>
+
+## 鉴权
+
+本接口支持以下鉴权方式，详情见 [素材资产 API 鉴权](https://docs.volcengine.com/docs/ark/private-virtual-avatar-library-guide-preview?lang=zh)。
+
+- API Key 鉴权适用于本文的素材网关示例。前往 [API Key 管理](https://ark.volcengine.com/region:cn-beijing/apiKey) 获取长效 API Key。直连官方素材接口使用 AK/SK 签名，前往 [Access Key 管理](https://console.volcengine.com/iam/keymanage) 获取访问密钥。
+
+---
+
+## 请求参数
+
+### Body 参数
+
+<div className="ark-api-fields">
+<ApiField name="AssetType" type="string" label="素材类型" sourceUrl={officialUrl}>
+
+支持 `Image`、`Video` 和 `Audio`，通过 URL 提交素材。
+
+| 类型 | 格式和限制 |
+| --- | --- |
+| `Image` | JPEG、PNG、WebP、TIFF、GIF、HEIC 或 HEIF。单图小于 30 MB，宽和高均在 300–6000 px 之间，宽高比在 0.4–2.5 之间，两组区间均不含端点。 |
+| `Video` | MP4 或 MOV。支持 480p、720p、1080p、4K，单段 2–30 秒，最大 200 MB，帧率 24–60 FPS。宽和高为 300–6000 px，宽高比 0.4–2.5。总像素下限为 407696，2.5 系列上限 8847360，2.0 系列上限 8295044。 |
+| `Audio` | WAV 或 MP3。单段 2–30 秒，最大 15 MB。 |
+
+模型接收音视频的时长限制各有不同。素材上传成功后，使用前仍需检查对应模型的输入约束。
+
+</ApiField>
+
+<ApiField name="GroupId" type="string" label="所属素材组 ID" sourceUrl={officialUrl}>
+
+指定素材所属的组，可使用 `CreateAssetGroup` 返回的 ID。
+
+</ApiField>
+
+<ApiField name="Name" type="string" label="素材名称" sourceUrl={officialUrl}>
+
+素材名称最多 64 个字符，用于 `ListAssets` 的模糊搜索。模型推理不读取这个名称。
+
+</ApiField>
+
+<ApiField name="ProjectName" type="string" label="所属项目" sourceUrl={officialUrl} defaultValue="default">
+
+素材的项目名称需要与 `GroupId` 所指素材组的项目一致。
+
+</ApiField>
+
+<ApiField name="URL" type="string" label="素材 URL" sourceUrl={officialUrl}>
+
+素材的公网可访问地址。图像、视频和音频均通过 URL 入库。
+
+</ApiField>
+</div>
+
+## 响应参数
+
+接口业务字段位于 `Result` 中。`ResponseMetadata` 包含请求元信息。
+
+<div className="ark-api-fields">
+<ApiField name="Id" type="string" label="素材 ID" sourceUrl={officialUrl}>
+
+该素材的唯一标识。
+
+</ApiField>
+</div>
+
+更多详情内容请见[火山官方文档](https://ark.volcengine.com/region:cn-beijing/docs/create-asset-api)。
+
+</div>
+<aside className="ark-api-examples" aria-label="接口示例">
+
+## 输入示例
+
+未配置站点基础地址时，将 `ARK_ASSET_BASE_URL` 设置为支持 Bearer 鉴权的素材网关地址，通过 `ARK_API_KEY` 提供凭证。直连火山方舟官方素材接口 `https://ark.cn-beijing.volcengineapi.com` 时，使用 AK/SK 签名。
+
+```sh title="cURL"
+curl --fail-with-body --request POST \
+  --url "${base_url}/api/v3/asset/?Action=CreateAsset&Version=2024-01-01" \
+  --header "Authorization: Bearer $ARK_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+  "AssetType": "Image",
+  "GroupId": "group-20261122123000-demo",
+  "Name": "demo-portrait-image",
+  "ProjectName": "default",
+  "URL": "https://example.com/portrait.png"
+}'
+```
+
+## 输出示例
+
+```json
+{
+  "ResponseMetadata": {
+    "RequestId": "example-request-id",
+    "Action": "CreateAsset",
+    "Version": "2024-01-01",
+    "Service": "ark",
+    "Region": "cn-beijing"
+  },
+  "Result": {
+    "Id": "asset-20261122123100-demo"
+  }
+}
+```
+
+</aside>
+</div>
+</div>

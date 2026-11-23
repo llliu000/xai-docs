@@ -1,0 +1,843 @@
+---
+title: 豆包格式
+description: 使用火山方舟 Seedream API 生成图片、编辑图片或拆分图层。
+fullWidth: true
+centered: false
+---
+
+import { ApiField } from "../doubao-video/ApiField";
+
+export const officialUrl = "https://console.volcengine.com/ark/region:cn-beijing/docs/image-generation-api";
+export const authUrl = "https://console.volcengine.com/ark/region:cn-beijing/docs/base-url-and-authentication";
+
+<p className="ark-api-endpoint">
+  <strong>POST</strong>
+  <code apiPath="/api/v3/images/generations" defaultBaseUrl="https://ark.cn-beijing.volces.com" />
+</p>
+
+通过文本和可选参考图生成图片。根据模型可使用组图、图层拆分、透明图片、联网搜索或流式返回。[火山方舟官方接口文档](https://console.volcengine.com/ark/region:cn-beijing/docs/image-generation-api)
+
+<div className="ark-api-reference">
+<div className="ark-api-columns">
+<div>
+
+## 鉴权
+
+本接口支持以下鉴权方式，详情见 [Base URL 及鉴权](https://console.volcengine.com/ark/region:cn-beijing/docs/base-url-and-authentication)。
+
+- API Key 鉴权。前往 [API Key 管理](https://ark.volcengine.com/region:cn-beijing/apiKey) 获取长效 API Key。
+
+## 模型选择
+
+| 模型 | Model ID | 支持的场景 |
+| --- | --- | --- |
+| Seedream 5.5 | `doubao-seedream-5-5-261028` | 单图生成、交互编辑、原生 RGBA、图层拆分、富文本 OCR |
+| Seedream 5.0 pro | `doubao-seedream-5-0-pro-260628` | 单图生成、交互编辑、图层拆分、透明图编辑、快速提示词优化 |
+| Seedream 5.0 flash | `doubao-seedream-5-0-flash-260915` | 单图生成、交互编辑、图层拆分、透明图编辑 |
+| Seedream 5.0 lite | `doubao-seedream-5-0-260128` 或 `doubao-seedream-5-0-lite-260128` | 单图和组图、流式输出、联网搜索 |
+| Seedream 4.5 | `doubao-seedream-4-5-251128` | 单图和组图、流式输出 |
+| Seedream 4.0 | `doubao-seedream-4-0-250828` | 单图和组图、流式输出、快速提示词优化 |
+
+模型开通状态和各版本的限流以火山方舟公布为准。[官方模型列表](https://console.volcengine.com/ark/region:cn-beijing/docs/model-list#image-generation) · [图片生成教程](https://console.volcengine.com/ark/region:cn-beijing/docs/image-generation-tutorial)
+
+## 请求参数
+
+### 请求头
+
+<div className="ark-api-fields">
+
+<ApiField name="Authorization" type="string" label="API Key" sourceUrl={authUrl} sourceText="Authorization" required>
+
+请求头值为 `Bearer $ARK_API_KEY`。
+
+</ApiField>
+
+<ApiField name="Content-Type" type="string" label="请求内容类型" sourceUrl={officialUrl} sourceText="Content-Type" required>
+
+请求体使用 `application/json`。
+
+</ApiField>
+
+</div>
+
+### Body 参数
+
+<div className="ark-api-fields">
+
+<ApiField name="model" type="string" label="模型 ID" sourceUrl={officialUrl} sourceText="model" required>
+
+传入已开通的 Model ID，也可使用推理接入点的 Endpoint ID。通过接入点可配置限流、计费、监控等能力。[开通模型服务](https://ark.volcengine.com/region:cn-beijing/openManagement?LLM=%7B%7D&OpenTokenDrawer=false) · [模型列表](https://console.volcengine.com/ark/region:cn-beijing/docs/model-list#image-generation) · [获取 Endpoint ID](https://console.volcengine.com/ark/region:cn-beijing/docs/online-inference-standard)
+
+</ApiField>
+
+<ApiField name="prompt" type="string" label="提示词" sourceUrl={officialUrl} sourceText="prompt" required="conditional">
+
+生成图片时必填。拆分图层时可通过提示词指定要提取的元素，省略时由模型识别并拆分主要元素。
+
+所有型号均支持中文和英文。Seedream 5.5、5.0 pro 和 5.0 flash 还支持俄语、阿拉伯语、菲律宾语、泰语、土耳其语、韩语、马来语、西班牙语、葡萄牙语、印尼语、法语、德语、越南语、日语。建议中文不超过 300 字、英文不超过 600 词。[Seedream 提示词指南](https://console.volcengine.com/ark/region:cn-beijing/docs/seedream-4-0-5-0-prompt-guide)
+
+</ApiField>
+
+<ApiField name="image" type="string 或 string[]" label="参考图片" sourceUrl={officialUrl} sourceText="image" required="conditional">
+
+支持可访问的 URL 或 `data:image/<图片格式>;base64,<Base64 编码>`。Base64 前缀中的图片格式使用小写。单图可传字符串，多图传数组。
+
+| 场景 | 数量 | 格式 | 单图像素和文件限制 |
+| --- | --- | --- | --- |
+| 生成 | 可省略。5.5、5.0 pro、5.0 flash 最多 10 张，5.0 lite、4.5、4.0 最多 14 张 | JPEG、PNG、WebP、BMP、TIFF、GIF、HEIC、HEIF | 宽、高均大于 14 px，总像素 196–36,000,000 |
+| 图层拆分 | 必须传 1 张 | PNG、JPEG | 总像素 262,144–36,000,000 |
+
+两类场景的宽高比均为 1:16–16:1，单图不超过 30 MB。总像素按宽乘高计算。
+
+</ApiField>
+
+<ApiField name="layer_decomposition" type="boolean" label="图层拆分开关" sourceUrl={officialUrl} sourceText="layer_decomposition" defaultValue="false">
+
+`true` 时把单张输入拆成一张底图和多个透明 PNG 图层。Seedream 5.5 最多 99 个图层，5.0 pro 和 5.0 flash 最多 16 个。任一图层失败时整次请求报错。响应提供图层顺序、位置、名称和描述。`false` 时执行图片生成。
+
+</ApiField>
+
+<ApiField name="layer_decomposition_options" type="object" label="图层拆分配置" sourceUrl={officialUrl} sourceText="layer_decomposition_options">
+
+仅 Seedream 5.5 在 `layer_decomposition: true` 时生效。
+
+<div className="ark-api-fields">
+
+<ApiField name="max_images" type="integer" label="最大输出图片数" sourceUrl={officialUrl} sourceText="layer_decomposition_options.max_images" defaultValue="30">
+
+取值 2–100，包含底图。按设定值预留每分钟图片额度（IPM），实际少于设定值时释放差额。未指定拆分对象时，模型会结合此值及输入图复杂度规划图层。
+
+</ApiField>
+
+<ApiField name="text_recognition" type="boolean" label="富文本 OCR 开关" sourceUrl={officialUrl} sourceText="layer_decomposition_options.text_recognition" defaultValue="false">
+
+开启后，可在 `data[].text_recognition` 读取规整文字及其样式。非文字图层、手写体和艺术字不返回此结果。[Seedream 5.5 OCR 支持字体](https://console.volcengine.com/ark/region:cn-beijing/docs/ocr-supported-fonts)
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="size" type="string" label="图像尺寸" sourceUrl={officialUrl} sourceText="size">
+
+生成场景可选择分辨率档位，并用 `prompt` 描述宽高比，也可直接传入 `宽x高`。显式指定像素时，宽高比必须在 1:16–16:1，且宽乘高需落在下表范围。
+
+| 模型 | 可选档位 | 默认值 | 指定宽高的总像素范围 |
+| --- | --- | --- | --- |
+| 5.5、5.0 pro、5.0 flash | `1K`、`1.5K`、`2K` | `2K` | 921,600–4,624,220 |
+| 5.0 lite | `2K`、`3K`、`4K` | `2048x2048` | 3,686,400–16,777,216 |
+| 4.5 | `2K`、`4K` | `2048x2048` | 3,686,400–16,777,216 |
+| 4.0 | `1K`、`2K`、`4K` | `2048x2048` | 921,600–16,777,216 |
+
+图层拆分仅支持 `1K`、`1.5K`、`2K` 和 `auto`（默认）。底图和各图层保留各自在原图中的宽高比。使用 `auto` 时，原尺寸落在 921,600–4,624,220 像素内则沿用原尺寸，低于 1K 按 1K 输出，高于 2K 按 2K 输出。
+
+**5.5、5.0 pro、5.0 flash 的档位映射示例**
+
+| 宽高比 | 1K | 1.5K | 2K |
+| --- | --- | --- | --- |
+| 1:1 | `1024x1024` | `1536x1536` | `2048x2048` |
+| 4:3 | `1152x864` | `1792x1344` | `2368x1776` |
+| 3:4 | `864x1152` | `1344x1792` | `1776x2368` |
+| 16:9 | `1424x800` | `2048x1152` | `2816x1584` |
+| 9:16 | `800x1424` | `1152x2048` | `1584x2816` |
+| 3:2 | `1248x832` | `1872x1248` | `2496x1664` |
+| 2:3 | `832x1248` | `1248x1872` | `1664x2496` |
+| 21:9 | `1568x672` | `2352x1008` | `3136x1344` |
+
+**5.0 lite、4.5、4.0 的档位映射示例**
+
+| 宽高比 | 1K（4.0） | 2K | 3K（5.0 lite） | 4K |
+| --- | --- | --- | --- | --- |
+| 1:1 | `1024x1024` | `2048x2048` | `3072x3072` | `4096x4096` |
+| 4:3 | `1152x864` | `2304x1728` | `3456x2592` | `4704x3520` |
+| 3:4 | `864x1152` | `1728x2304` | `2592x3456` | `3520x4704` |
+| 16:9 | `1280x720` | `2848x1600` | `4096x2304` | `5504x3040` |
+| 9:16 | `720x1280` | `1600x2848` | `2304x4096` | `3040x5504` |
+| 3:2 | `1248x832` | `2496x1664` | `3744x2496` | `4992x3328` |
+| 2:3 | `832x1248` | `1664x2496` | `2496x3744` | `3328x4992` |
+| 21:9 | `1512x648` | `3136x1344` | `4704x2016` | `6240x2656` |
+
+</ApiField>
+
+<ApiField name="optimize_prompt_options" type="object" label="提示词优化配置" sourceUrl={officialUrl} sourceText="optimize_prompt_options">
+
+设置生成前的提示词优化模式。
+
+<div className="ark-api-fields">
+
+<ApiField name="mode" type="string" label="优化模式" sourceUrl={officialUrl} sourceText="optimize_prompt_options.mode" defaultValue="standard">
+
+`standard` 是所有型号的默认值。Seedream 5.0 pro 和 4.0 另外支持 `fast`，以缩短生成耗时。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="output_format" type="string" label="图像格式" sourceUrl={officialUrl} sourceText="output_format">
+
+Seedream 5.5、5.0 pro、5.0 flash 和 5.0 lite 支持 `png`、`jpeg`。5.5 默认 `png`，其他列出的型号默认 `jpeg`。图层拆分时此字段只控制底图，图层固定为 PNG。`background: "transparent"` 需搭配 PNG，搭配 JPEG 会报错。
+
+</ApiField>
+
+<ApiField name="background" type="string" label="透明通道模式" sourceUrl={officialUrl} sourceText="background">
+
+`transparent` 输出 RGBA，`opaque` 输出 RGB。`auto` 由模型按提示词和文件格式判断，JPEG 输出为不透明。图层拆分请求省略本字段。
+
+| 模型 | 可选值 | 透明输出的输入要求 |
+| --- | --- | --- |
+| Seedream 5.5 | `auto`（默认）、`transparent`、`opaque` | 支持文生图，也支持最多 10 张参考图。参考图可以不带 Alpha 通道 |
+| Seedream 5.0 pro、5.0 flash | `opaque`（默认）、`transparent` | 仅支持一张带 Alpha 通道的 PNG 参考图 |
+
+</ApiField>
+
+<ApiField name="response_format" type="string" label="返回格式" sourceUrl={officialUrl} sourceText="response_format" defaultValue="url">
+
+`url` 通过 `data[].url` 返回下载链接，有效期为生成后 24 小时。`b64_json` 通过 `data[].b64_json` 返回 Base64 字符串。流式模式在成功事件中使用相同字段名。
+
+</ApiField>
+
+<ApiField name="sequential_image_generation" type="string" label="组图模式" sourceUrl={officialUrl} sourceText="sequential_image_generation" defaultValue="disabled">
+
+仅 Seedream 5.0 lite、4.5 和 4.0 支持。`auto` 让模型根据提示词决定是否生成组图及生成张数，`disabled` 只返回一张图。Seedream 5.5、5.0 pro 和 5.0 flash 省略此字段。
+
+</ApiField>
+
+<ApiField name="sequential_image_generation_options" type="object" label="组图配置" sourceUrl={officialUrl} sourceText="sequential_image_generation_options">
+
+仅当 `sequential_image_generation: "auto"` 时生效。支持的型号与组图模式相同。
+
+<div className="ark-api-fields">
+
+<ApiField name="max_images" type="integer" label="最大生成数量" sourceUrl={officialUrl} sourceText="sequential_image_generation_options.max_images" defaultValue="15">
+
+取值 1–15。输入参考图与最终生成图片的数量之和不得超过 15。按设定值预留 IPM，少生成的部分释放额度。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="stream" type="boolean" label="流式输出开关" sourceUrl={officialUrl} sourceText="stream" defaultValue="false">
+
+`false` 在生成结束后返回完整结果。`true` 通过 SSE 逐张返回结果，单图和组图均可使用。仅 Seedream 5.0 lite、4.5 和 4.0 支持。
+
+</ApiField>
+
+<ApiField name="tools" type="object[]" label="工具配置" sourceUrl={officialUrl} sourceText="tools">
+
+仅 Seedream 5.0 lite 支持。模型根据提示词决定是否发起搜索，可从 `usage.tool_usage.web_search` 读取实际次数。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="工具类型" sourceUrl={officialUrl} sourceText="tools.type" required>
+
+支持 `web_search`，用于联网搜索。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="watermark" type="boolean" label="水印开关" sourceUrl={officialUrl} sourceText="watermark" defaultValue="true">
+
+`true` 在生成图右下角添加「AI 生成」水印，`false` 不添加水印。
+
+</ApiField>
+
+<ApiField name="safety_identifier" type="string" label="终端用户标识" sourceUrl={officialUrl} sourceText="safety_identifier">
+
+最多 64 个字符的英文字符串，同一用户保持固定，不同用户使用不同值。可使用用户 ID 等的哈希值。支持 Seedream 5.5、5.0 pro 和 5.0 flash。
+
+</ApiField>
+
+</div>
+
+## 响应参数
+
+### 非流式调用
+
+<div className="ark-api-fields">
+
+<ApiField name="created" type="integer" label="创建时间" sourceUrl={officialUrl} sourceText="created">
+
+请求创建时的 Unix 时间戳，单位为秒。
+
+</ApiField>
+
+<ApiField name="model" type="string" label="模型 ID" sourceUrl={officialUrl} sourceText="model">
+
+本次请求实际使用的带版本模型 ID。
+
+</ApiField>
+
+<ApiField name="data" type="object[]" label="图像结果" sourceUrl={officialUrl} sourceText="data">
+
+每项对应一张生成图、底图、图层，或组图中的单图错误。根据请求格式返回 URL 或 Base64。
+
+<div className="ark-api-fields">
+
+<ApiField name="url" type="string" label="图片 URL" sourceUrl={officialUrl} sourceText="data.url">
+
+当 `response_format` 为 `url` 时返回，链接在图片生成后 24 小时内有效。[火山引擎 TOS 数据订阅](https://docs.volcengine.com/docs/torch-object-storage/data-subscription?lang=zh)
+
+</ApiField>
+
+<ApiField name="b64_json" type="string" label="图片 Base64 数据" sourceUrl={officialUrl} sourceText="data.b64_json">
+
+当 `response_format` 为 `b64_json` 时返回。解码后可保存为对应格式的图片文件。
+
+</ApiField>
+
+<ApiField name="size" type="string" label="实际图像尺寸" sourceUrl={officialUrl} sourceText="data.size">
+
+实际像素尺寸，格式为 `宽x高`，如 `2048x2048`。
+
+</ApiField>
+
+<ApiField name="output_format" type="string" label="实际输出格式" sourceUrl={officialUrl} sourceText="data.output_format">
+
+Seedream 5.5、5.0 pro 和 5.0 flash 返回 `png` 或 `jpeg`。拆分出的图层一律为 PNG。
+
+</ApiField>
+
+<ApiField name="background" type="string" label="实际透明度" sourceUrl={officialUrl} sourceText="data.background">
+
+Seedream 5.5 返回。`transparent` 表示存在透明或半透明像素，`opaque` 表示整图不透明。
+
+</ApiField>
+
+<ApiField name="z_index" type="integer" label="图层叠放顺序" sourceUrl={officialUrl} sourceText="data.z_index">
+
+图层拆分时返回。底图固定为 `0`，其他图层从 `1` 开始，值越大越靠上。
+
+</ApiField>
+
+<ApiField name="name" type="string" label="图层名称" sourceUrl={officialUrl} sourceText="data.name">
+
+拆分时由模型生成的元素名称。
+
+</ApiField>
+
+<ApiField name="description" type="string" label="图层描述" sourceUrl={officialUrl} sourceText="data.description">
+
+拆分时由模型生成的元素详情，可包含颜色、状态或材质等。
+
+</ApiField>
+
+<ApiField name="bounding_box" type="object" label="图层边界框" sourceUrl={officialUrl} sourceText="data.bounding_box">
+
+仅拆分图层返回，以输出底图为坐标系。使用绝对坐标可在底图上重建位置。将多个图层按 `z_index` 升序叠放。
+
+<div className="ark-api-fields">
+
+<ApiField name="absolute" type="integer[]" label="绝对坐标" sourceUrl={officialUrl} sourceText="data.bounding_box.absolute">
+
+以输出底图左上角为原点，四个整数依次为 `[left, top, right, bottom]`，单位为像素。将图层缩放为 `(right - left) × (bottom - top)` 后放在 `(left, top)`。
+
+</ApiField>
+
+<ApiField name="normalized" type="integer[]" label="归一化坐标" sourceUrl={officialUrl} sourceText="data.bounding_box.normalized">
+
+四条边按底图宽高换算为 0–1000 间的整数。还原到任意画布时，横坐标乘画布宽度再除以 1000，纵坐标乘画布高度再除以 1000。归一化过程可能产生取整误差。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="text_recognition" type="object" label="富文本 OCR 结果" sourceUrl={officialUrl} sourceText="data.text_recognition">
+
+Seedream 5.5 开启图层拆分及富文本 OCR，且模型判定当前层为规整文字时返回。
+
+<div className="ark-api-fields">
+
+<ApiField name="text" type="string" label="完整文本" sourceUrl={officialUrl} sourceText="data.text_recognition.text">
+
+纯文本按从上到下、从左到右排列，行与行之间以换行符分隔。
+
+</ApiField>
+
+<ApiField name="lines" type="object[]" label="文字行" sourceUrl={officialUrl} sourceText="data.text_recognition.lines">
+
+每项代表一行文本的位置和样式。
+
+<div className="ark-api-fields">
+
+<ApiField name="bounding_box" type="object" label="文字行边界框" sourceUrl={officialUrl} sourceText="data.text_recognition.lines.bounding_box">
+
+坐标基于输出底图，换算规则同图层边界框。
+
+<div className="ark-api-fields">
+
+<ApiField name="absolute" type="integer[]" label="绝对坐标" sourceUrl={officialUrl} sourceText="data.text_recognition.lines.bounding_box.absolute">
+
+文字行在底图中的像素坐标，顺序为 `[left, top, right, bottom]`，原点为底图左上角。
+
+</ApiField>
+
+<ApiField name="normalized" type="integer[]" label="归一化坐标" sourceUrl={officialUrl} sourceText="data.text_recognition.lines.bounding_box.normalized">
+
+文字行的坐标归一化到 0–1000，顺序与 `absolute` 相同。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="runs" type="object[]" label="样式片段" sourceUrl={officialUrl} sourceText="data.text_recognition.lines.runs">
+
+相邻同样式的文字通常属于同一个片段。样式有变化时，一行可含多个片段。
+
+<div className="ark-api-fields">
+
+<ApiField name="text" type="string" label="片段文本" sourceUrl={officialUrl} sourceText="data.text_recognition.lines.runs.text">
+
+本片段的文本，行内无换行符。
+
+</ApiField>
+
+<ApiField name="style" type="object" label="视觉样式" sourceUrl={officialUrl} sourceText="data.text_recognition.lines.runs.style">
+
+由模型估计各项文字属性，可能与原图层的实际属性有偏差。
+
+<div className="ark-api-fields">
+
+<ApiField name="similar_font_family" type="string" label="相似字体" sourceUrl={officialUrl} sourceText="data.text_recognition.lines.runs.style.similar_font_family">
+
+模型识别的近似字体。无法判断时返回 `unknown`。
+
+</ApiField>
+
+<ApiField name="foreground_color" type="string" label="文字颜色" sourceUrl={officialUrl} sourceText="data.text_recognition.lines.runs.style.foreground_color">
+
+大写十六进制 `#RRGGBB`，无 Alpha 通道。
+
+</ApiField>
+
+<ApiField name="bold" type="boolean" label="粗体" sourceUrl={officialUrl} sourceText="data.text_recognition.lines.runs.style.bold">
+
+是否识别出粗体。
+
+</ApiField>
+
+<ApiField name="italic" type="boolean" label="斜体" sourceUrl={officialUrl} sourceText="data.text_recognition.lines.runs.style.italic">
+
+字形本身是否倾斜。文字整体旋转或透视变形不计入。
+
+</ApiField>
+
+<ApiField name="underline" type="boolean" label="下划线" sourceUrl={officialUrl} sourceText="data.text_recognition.lines.runs.style.underline">
+
+是否有文字下划线。分割线或装饰横线不计入。
+
+</ApiField>
+
+<ApiField name="strikethrough" type="boolean" label="删除线" sourceUrl={officialUrl} sourceText="data.text_recognition.lines.runs.style.strikethrough">
+
+是否有文字删除线。
+
+</ApiField>
+
+<ApiField name="shadow" type="boolean" label="阴影" sourceUrl={officialUrl} sourceText="data.text_recognition.lines.runs.style.shadow">
+
+是否有明显的外投影、阴影或发光偏移。普通抗锯齿不计入。
+
+</ApiField>
+
+<ApiField name="translucent" type="boolean" label="半透明" sourceUrl={officialUrl} sourceText="data.text_recognition.lines.runs.style.translucent">
+
+文字墨迹是否明显透出背景。浅色实心文字不计入。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="error" type="object" label="组图单图错误" sourceUrl={officialUrl} sourceText="data.error">
+
+Seedream 5.0 lite、4.5、4.0 组图时可在失败项返回。单图审核失败后会继续处理余下图片，遇到服务内部错误（HTTP 500）时停止后续生成。
+
+<div className="ark-api-fields">
+
+<ApiField name="code" type="string" label="错误码" sourceUrl={officialUrl} sourceText="data.error.code">
+
+用于识别失败原因。[火山方舟错误码](https://console.volcengine.com/ark/region:cn-beijing/docs/error-codes)
+
+</ApiField>
+
+<ApiField name="message" type="string" label="错误消息" sourceUrl={officialUrl} sourceText="data.error.message">
+
+可读的错误提示。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="error" type="object" label="请求错误" sourceUrl={officialUrl} sourceText="error">
+
+整次请求没有成功生成图片时返回。
+
+<div className="ark-api-fields">
+
+<ApiField name="code" type="string" label="错误码" sourceUrl={officialUrl} sourceText="error.code">
+
+用于识别失败原因。[火山方舟错误码](https://console.volcengine.com/ark/region:cn-beijing/docs/error-codes)
+
+</ApiField>
+
+<ApiField name="message" type="string" label="错误消息" sourceUrl={officialUrl} sourceText="error.message">
+
+可读的错误提示。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="safety_identifier" type="string" label="终端用户标识" sourceUrl={officialUrl} sourceText="safety_identifier">
+
+Seedream 5.5、5.0 pro 和 5.0 flash 原样返回请求中提供的标识。
+
+</ApiField>
+
+<ApiField name="tools" type="object[]" label="工具调用列表" sourceUrl={officialUrl} sourceText="tools">
+
+Seedream 5.0 lite 返回本次由模型使用的工具。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="工具类型" sourceUrl={officialUrl} sourceText="tools.type">
+
+`web_search` 表示联网搜索。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="usage" type="object" label="用量信息" sourceUrl={officialUrl} sourceText="usage">
+
+生成张数、令牌用量及工具用量。
+
+<div className="ark-api-fields">
+
+<ApiField name="generated_images" type="integer" label="成功生成图片数" sourceUrl={officialUrl} sourceText="usage.generated_images">
+
+仅统计成功生成的图片。
+
+</ApiField>
+
+<ApiField name="input_images" type="integer" label="输入图片数" sourceUrl={officialUrl} sourceText="usage.input_images">
+
+Seedream 5.5、5.0 pro 和 5.0 flash 返回传入的参考图片张数。
+
+</ApiField>
+
+<ApiField name="output_tokens" type="integer" label="输出令牌数" sourceUrl={officialUrl} sourceText="usage.output_tokens">
+
+对所有输出图累加宽乘高，除以 256 后取整。
+
+</ApiField>
+
+<ApiField name="tool_usage" type="object" label="工具用量" sourceUrl={officialUrl} sourceText="usage.tool_usage">
+
+Seedream 5.0 lite 的工具用量统计。
+
+<div className="ark-api-fields">
+
+<ApiField name="web_search" type="integer" label="联网搜索次数" sourceUrl={officialUrl} sourceText="usage.tool_usage.web_search">
+
+仅开启联网搜索时返回。`0` 表示本次没有执行搜索。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="total_tokens" type="integer" label="总令牌数" sourceUrl={officialUrl} sourceText="usage.total_tokens">
+
+当前不计算输入令牌数，与 `output_tokens` 相同。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+### 流式调用
+
+启用 `stream` 后，服务端以 SSE 推送逐张生成结果。单图事件中的 `image_index` 从 0 开始。成功事件按 `response_format` 返回 `url` 或 `b64_json`。[图片生成流式响应事件](https://console.volcengine.com/ark/region:cn-beijing/docs/image-generation-streaming-responses)
+
+| 事件 | 返回内容 |
+| --- | --- |
+| `image_generation.partial_succeeded` | `type`、`model`、`created`、`image_index`、`size` 与图片 URL 或 Base64 数据。 |
+| `image_generation.partial_failed` | `type`、`model`、`created`、`image_index` 及该张图片的 `error.code` 和 `error.message`。 |
+| `image_generation.completed` | `type`、`model`、`created` 和汇总用量 `usage`。实际使用工具时可返回 `tools`。 |
+| `error` | 整体失败，例如鉴权失败或缺少参数，返回 `error.code` 和 `error.message`。 |
+
+</div>
+<aside className="ark-api-examples" aria-label="接口示例">
+
+## 输入示例
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```sh title="文生图"
+curl --request POST "${base_url}/api/v3/images/generations" \
+  --header "Authorization: Bearer $ARK_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "doubao-seedream-5-5-261028",
+    "prompt": "生成一张时尚杂志封面风格的近景人像。人物戴拼色立体帽，眼神坚定，采用浅景深和鲜明的棚拍光线。",
+    "size": "2K",
+    "output_format": "png",
+    "watermark": true
+  }'
+```
+
+```sh title="图生图"
+curl --request POST "${base_url}/api/v3/images/generations" \
+  --header "Authorization: Bearer $ARK_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "doubao-seedream-5-5-261028",
+    "prompt": "将参考图中银色金属服装改为通透的流动玻璃，保留人物姿势和服装轮廓，让透过材质的光产生自然折射。",
+    "image": "https://arkdocs.tos-cn-beijing.volces.com/images/image-generation/seedream4_5_imageToimage.png",
+    "size": "2K",
+    "output_format": "png",
+    "watermark": true
+  }'
+```
+
+```sh title="多图融合"
+curl --request POST "${base_url}/api/v3/images/generations" \
+  --header "Authorization: Bearer $ARK_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "doubao-seedream-5-5-261028",
+    "prompt": "让第一张图中的人物穿上第二张图里的服装，保留第一张图中的人物和构图。",
+    "image": [
+      "https://arkdocs.tos-cn-beijing.volces.com/images/image-generation/seedream4_imagesToimage_1.png",
+      "https://arkdocs.tos-cn-beijing.volces.com/images/image-generation/seedream4_5_imagesToimage_2.png"
+    ],
+    "size": "2K",
+    "output_format": "png",
+    "watermark": true
+  }'
+```
+
+```sh title="多参考图生组图"
+curl --request POST "${base_url}/api/v3/images/generations" \
+  --header "Authorization: Bearer $ARK_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "doubao-seedream-5-0-260128",
+    "prompt": "按参考图生成三张连续插画，表现女孩和奶牛玩偶从清晨到夜晚在游乐园乘坐过山车的场景。",
+    "image": [
+      "https://arkdocs.tos-cn-beijing.volces.com/images/image-generation/seedream4_imagesToimages_1.png",
+      "https://arkdocs.tos-cn-beijing.volces.com/images/image-generation/seedream4_imagesToimages_2.png"
+    ],
+    "sequential_image_generation": "auto",
+    "sequential_image_generation_options": {
+      "max_images": 3
+    },
+    "size": "2K",
+    "output_format": "png",
+    "watermark": true
+  }'
+```
+
+```sh title="流式输出"
+curl --request POST --no-buffer "${base_url}/api/v3/images/generations" \
+  --header "Authorization: Bearer $ARK_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "doubao-seedream-5-0-260128",
+    "prompt": "以参考图为基础生成四张关联图片，分别表现戴墨镜、骑摩托、戴帽子和手持棒棒糖。",
+    "image": "https://arkdocs.tos-cn-beijing.volces.com/images/image-generation/seedream4_imageToimages_1.png",
+    "sequential_image_generation": "auto",
+    "sequential_image_generation_options": {
+      "max_images": 4
+    },
+    "size": "2K",
+    "stream": true,
+    "output_format": "png",
+    "watermark": true
+  }'
+```
+
+```sh title="联网搜索"
+curl --request POST "${base_url}/api/v3/images/generations" \
+  --header "Authorization: Bearer $ARK_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "doubao-seedream-5-0-260128",
+    "prompt": "查询上海未来五天的天气，制作横向天气海报，每天一列，标注气温范围和穿衣建议。",
+    "size": "2048x2048",
+    "tools": [
+      {
+        "type": "web_search"
+      }
+    ],
+    "output_format": "png",
+    "response_format": "url",
+    "watermark": true
+  }'
+```
+
+```sh title="交互编辑"
+curl --request POST "${base_url}/api/v3/images/generations" \
+  --header "Authorization: Bearer $ARK_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "doubao-seedream-5-5-261028",
+    "prompt": "按图上的手绘标注调整场景。在左下方摆一叠杂志，右侧放一杯带杯碟的咖啡。清除标记，保留原构图并匹配光影。",
+    "image": "https://arkdocs.tos-cn-beijing.volces.com/images/image-generation/seedream_50_pro_input2.png",
+    "size": "2K",
+    "output_format": "png",
+    "response_format": "url",
+    "watermark": true
+  }'
+```
+
+```sh title="图层拆分"
+curl --request POST "${base_url}/api/v3/images/generations" \
+  --header "Authorization: Bearer $ARK_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "doubao-seedream-5-5-261028",
+    "prompt": "提取海报中的主要标题、字幕、主体和装饰元素，将它们分别拆为可独立编辑的图层。",
+    "image": "https://arkdocs.tos-cn-beijing.volces.com/images/image-generation/seedream_50_pro_layer_input.png",
+    "layer_decomposition": true,
+    "size": "2K",
+    "output_format": "jpeg",
+    "response_format": "url",
+    "watermark": true
+  }'
+```
+
+</CodeTabs>
+</div>
+
+## 输出示例
+
+下方图片链接为响应结构示例。实际调用会返回有时效的下载地址。
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```json title="图片响应"
+{
+  "model": "doubao-seedream-5-5-261028",
+  "created": 1794873600,
+  "data": [
+    {
+      "url": "https://example.com/generated.png",
+      "size": "2048x2048",
+      "output_format": "png",
+      "background": "opaque"
+    }
+  ],
+  "usage": {
+    "input_images": 0,
+    "generated_images": 1,
+    "output_tokens": 16384,
+    "total_tokens": 16384
+  }
+}
+```
+
+```json title="图层拆分响应"
+{
+  "model": "doubao-seedream-5-5-261028",
+  "created": 1794873600,
+  "data": [
+    {
+      "url": "https://example.com/base.jpeg",
+      "size": "2048x2048",
+      "output_format": "jpeg",
+      "z_index": 0
+    },
+    {
+      "url": "https://example.com/layer.png",
+      "size": "1272x264",
+      "output_format": "png",
+      "z_index": 1,
+      "name": "主标题",
+      "description": "海报上方的标题文字",
+      "bounding_box": {
+        "absolute": [
+          384,
+          120,
+          1656,
+          384
+        ],
+        "normalized": [
+          188,
+          59,
+          809,
+          188
+        ]
+      }
+    }
+  ],
+  "usage": {
+    "input_images": 1,
+    "generated_images": 2,
+    "output_tokens": 17695,
+    "total_tokens": 17695
+  }
+}
+```
+
+```text title="流式事件"
+event: image_generation.partial_succeeded
+data: {"type":"image_generation.partial_succeeded","model":"doubao-seedream-5-0-260128","created":1794873600,"image_index":0,"url":"https://example.com/first.png","size":"2048x2048"}
+
+event: image_generation.partial_failed
+data: {"type":"image_generation.partial_failed","model":"doubao-seedream-5-0-260128","created":1794873601,"image_index":1,"error":{"code":"OutputImageSensitiveContentDetected","message":"输出图像未通过审核。"}}
+
+event: image_generation.completed
+data: {"type":"image_generation.completed","model":"doubao-seedream-5-0-260128","created":1794873602,"usage":{"generated_images":1,"output_tokens":16384,"total_tokens":16384}}
+
+data: [DONE]
+```
+
+</CodeTabs>
+</div>
+
+</aside>
+</div>
+</div>

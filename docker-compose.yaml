@@ -1,0 +1,9 @@
+services:
+  docs:
+    build:
+      context: .
+      args:
+        ZUDOKU_PUBLIC_API_BASE_URL: "${ZUDOKU_PUBLIC_API_BASE_URL:-}"
+    ports:
+      - "20280:80"
+    restart: unless-stopped

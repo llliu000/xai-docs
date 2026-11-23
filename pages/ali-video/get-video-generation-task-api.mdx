@@ -1,0 +1,256 @@
+---
+title: 查询视频生成任务
+description: 用百炼任务 ID 查询万相 3.0 视频生成状态、结果和用量。
+fullWidth: true
+centered: false
+---
+
+import { ApiField } from "../doubao-video/ApiField";
+
+export const officialUrl = "https://docs.bailian.console.aliyun.com/zh/model-studio/wan3-video-generation-api-reference";
+
+<p className="ark-api-endpoint">
+  <strong>GET</strong>
+  <code apiPath="/api/v1/tasks/{task_id}" defaultBaseUrl="https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com" exampleBaseUrl="${DASHSCOPE_BASE_URL%/}" />
+</p>
+
+用[创建接口](/ali-video/create-video-generation-task-api)返回的任务 ID 查询处理状态。生成期间可每隔约 15 秒轮询，成功后下载 `output.video_url`。任务 ID 和视频地址各有 24 小时有效期，过期任务返回 `UNKNOWN`。查询默认限流为每秒 20 次，也可通过[异步任务回调](https://docs.bailian.console.aliyun.com/zh/model-studio/async-task-api)接收通知。
+
+<div className="ark-api-reference">
+<div className="ark-api-columns">
+<div>
+
+## 鉴权
+
+本接口支持以下鉴权方式，详情见 [百炼视频接口鉴权](https://docs.bailian.console.aliyun.com/zh/model-studio/wan3-video-generation-api-reference)。
+
+- API Key 鉴权。前往 [获取与配置 API Key](https://docs.bailian.console.aliyun.com/zh/model-studio/get-api-key) 获取对应地域和业务空间的 API Key。
+
+---
+
+## 请求参数
+
+### 请求头
+
+<div className="ark-api-fields">
+<ApiField name="Authorization" type="string" label="API Key" sourceUrl={officialUrl} sourceText="Authorization" required>
+
+请求头的值为 `Bearer $DASHSCOPE_API_KEY`，其中变量为业务空间和地域对应的百炼 API Key。
+
+</ApiField>
+</div>
+
+### URL 参数
+
+<div className="ark-api-fields">
+
+<ApiField name="task_id" type="string" label="任务 ID" sourceUrl={officialUrl} sourceText="task_id" required>
+
+将创建接口返回的 `output.task_id` 完整填入 URL 路径。
+
+</ApiField>
+</div>
+
+## 响应参数
+
+<div className="ark-api-fields">
+<ApiField name="output" type="object" label="任务结果" sourceUrl={officialUrl} sourceText="任务输出信息">
+
+返回任务状态。成功后从 `video_url` 取出产物，任务执行失败时查看 `code` 和 `message`。
+
+<div className="ark-api-fields">
+<ApiField name="task_id" type="string" label="任务 ID" sourceUrl={officialUrl} sourceText="task_id" required>
+
+用于查询任务状态和结果的标识。自创建起 24 小时内可查询。
+
+</ApiField>
+
+<ApiField name="task_status" type="string" label="任务状态" sourceUrl={officialUrl} sourceText="task_status">
+
+| 状态 | 含义 |
+| --- | --- |
+| `PENDING` | 等待执行。 |
+| `RUNNING` | 正在处理。 |
+| `SUCCEEDED` | 生成成功。 |
+| `FAILED` | 生成失败。 |
+| `CANCELED` | 已取消。 |
+| `UNKNOWN` | 任务不存在、已过期或状态未知。 |
+
+</ApiField>
+
+<ApiField name="submit_time" type="string" label="提交时间" sourceUrl={officialUrl} sourceText="submit_time">
+
+提交任务的时刻，格式为 `YYYY-MM-DD HH:mm:ss.SSS`。
+
+</ApiField>
+
+<ApiField name="scheduled_time" type="string" label="开始执行时间" sourceUrl={officialUrl} sourceText="scheduled_time">
+
+任务开始处理的时刻，格式为 `YYYY-MM-DD HH:mm:ss.SSS`。
+
+</ApiField>
+
+<ApiField name="end_time" type="string" label="完成时间" sourceUrl={officialUrl} sourceText="end_time">
+
+任务执行结束的时刻，格式为 `YYYY-MM-DD HH:mm:ss.SSS`。
+
+</ApiField>
+
+<ApiField name="orig_prompt" type="string" label="原始提示词" sourceUrl={officialUrl} sourceText="orig_prompt">
+
+创建任务时提交的原始 `prompt`。
+
+</ApiField>
+
+<ApiField name="video_url" type="string" label="视频地址" sourceUrl={officialUrl} sourceText="video_url">
+
+仅成功时可获取。视频为 H.264 编码的 MP4，链接有效期为 24 小时。
+
+</ApiField>
+
+<ApiField name="code" type="string" label="错误码" sourceUrl={officialUrl} sourceText="code">
+
+失败时返回，可用来查询[百炼错误码](https://docs.bailian.console.aliyun.com/zh/model-studio/error-code)。
+
+</ApiField>
+
+<ApiField name="message" type="string" label="错误信息" sourceUrl={officialUrl} sourceText="message">
+
+失败时返回的错误说明。
+
+</ApiField>
+</div>
+
+</ApiField>
+
+<ApiField name="usage" type="object" label="用量统计" sourceUrl={officialUrl} sourceText="用量统计">
+
+仅成功生成的视频计入此统计。
+
+<div className="ark-api-fields">
+<ApiField name="video_count" type="integer" label="生成数量" sourceUrl={officialUrl} sourceText="video_count">
+
+固定为 1。
+
+</ApiField>
+
+<ApiField name="duration" type="float" label="合计视频时长" sourceUrl={officialUrl} sourceText="总视频时长">
+
+以秒计。无参考视频时等于输出时长。使用参考视频时等于输入视频时长加上输出视频时长。
+
+</ApiField>
+
+<ApiField name="input_video_duration" type="float" label="输入视频时长" sourceUrl={officialUrl} sourceText="input_video_duration">
+
+以秒计。无视频输入时为 `0.0`。
+
+</ApiField>
+
+<ApiField name="output_video_duration" type="float" label="输出视频时长" sourceUrl={officialUrl} sourceText="output_video_duration">
+
+生成视频的时长，单位为秒。
+
+</ApiField>
+
+<ApiField name="fps" type="integer" label="输出帧率" sourceUrl={officialUrl} sourceText="生成视频的帧率">
+
+默认 30 fps。
+
+</ApiField>
+
+<ApiField name="SR" type="integer" label="输出分辨率" sourceUrl={officialUrl} sourceText="生成视频的分辨率">
+
+以数字表示输出的分辨率档位，例如 `720`。字段名为大写 `SR`。
+
+</ApiField>
+
+<ApiField name="ratio" type="string" label="输出宽高比" sourceUrl={officialUrl} sourceText="生成视频的宽高比">
+
+例如 `16:9`。
+
+</ApiField>
+</div>
+
+</ApiField>
+
+<ApiField name="request_id" type="string" label="请求 ID" sourceUrl={officialUrl} sourceText="request_id">
+
+本次 HTTP 调用的标识，便于日志追踪和故障定位。
+
+</ApiField>
+</div>
+
+批量查询或取消任务见[异步任务管理](https://docs.bailian.console.aliyun.com/zh/model-studio/manage-asynchronous-tasks)。
+
+更多详情内容请见[阿里云百炼查询接口原文](https://docs.bailian.console.aliyun.com/zh/model-studio/wan3-video-generation-api-reference#:~:text=%E6%AD%A5%E9%AA%A42%EF%BC%9A%E6%A0%B9%E6%8D%AE%E4%BB%BB%E5%8A%A1ID%E6%9F%A5%E8%AF%A2%E7%BB%93%E6%9E%9C)。
+
+</div>
+<aside className="ark-api-examples" aria-label="接口示例">
+
+## 输入示例
+
+未配置站点基础地址时，将 `DASHSCOPE_BASE_URL` 设置为工作空间的基础地址，例如北京地域的 `https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com`。
+
+```sh title="cURL"
+curl --fail-with-body --request GET \
+  --url "${base_url}/api/v1/tasks/$TASK_ID" \
+  --header "Authorization: Bearer $DASHSCOPE_API_KEY"
+```
+
+## 输出示例
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```json title="任务成功"
+{
+  "request_id": "example-query-request-id",
+  "output": {
+    "task_id": "demo-task-id",
+    "task_status": "SUCCEEDED",
+    "submit_time": "2026-11-22 10:00:00.000",
+    "scheduled_time": "2026-11-22 10:00:03.000",
+    "end_time": "2026-11-22 10:02:00.000",
+    "orig_prompt": "清晨的海边灯塔亮起，镜头从沙滩缓慢推进，远处可听见海浪。",
+    "video_url": "https://example.com/generated-video.mp4"
+  },
+  "usage": {
+    "video_count": 1,
+    "duration": 5,
+    "input_video_duration": 0,
+    "output_video_duration": 5,
+    "fps": 30,
+    "SR": 720,
+    "ratio": "16:9"
+  }
+}
+```
+
+```json title="任务失败"
+{
+  "request_id": "example-failed-request-id",
+  "output": {
+    "task_id": "demo-task-id",
+    "task_status": "FAILED",
+    "code": "InvalidParameter",
+    "message": "Reference media cannot be combined with first or last frame media."
+  }
+}
+```
+
+```json title="查询过期"
+{
+  "request_id": "example-expired-request-id",
+  "output": {
+    "task_id": "demo-task-id",
+    "task_status": "UNKNOWN"
+  }
+}
+```
+
+</CodeTabs>
+</div>
+
+</aside>
+</div>
+</div>

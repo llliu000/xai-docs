@@ -1,0 +1,918 @@
+---
+title: Claude格式
+description: 使用 Claude Messages API 创建消息。
+fullWidth: true
+centered: false
+---
+
+import { ApiField } from "../doubao-video/ApiField";
+
+export const officialUrl = "https://platform.claude.com/docs/zh-CN/api/http/messages/create";
+
+<p className="ark-api-endpoint">
+  <strong>POST</strong>
+  <code apiPath="/v1/messages" defaultBaseUrl="https://api.anthropic.com" />
+</p>
+
+发送包含文本和/或图像内容的结构化输入消息列表，由模型生成对话中的下一条消息。Messages API 支持单次请求和无状态多轮对话。本文档对应 API 版本 `2026-10-21`。
+
+<div className="ark-api-reference">
+<div className="ark-api-columns">
+<div>
+
+## 鉴权
+
+本接口支持以下鉴权方式，详情见 [Claude 官方鉴权说明](https://platform.claude.com/docs/zh-CN/manage-claude/authentication)。
+
+- API Key 鉴权。前往 [Claude API Key 管理](https://platform.claude.com/settings/keys) 获取 API Key。
+
+---
+
+## 请求参数
+
+### 请求头
+
+<div className="ark-api-fields">
+
+<ApiField name="Authorization" type="string" label="API Key" sourceUrl={officialUrl} required>
+
+Bearer 鉴权值，格式为 `Bearer $ANTHROPIC_API_KEY`。
+
+</ApiField>
+
+<ApiField name="x-api-key" type="string" label="旧版 API Key 请求头" sourceUrl={officialUrl}>
+
+兼容旧版鉴权方式时可使用 `x-api-key: $ANTHROPIC_API_KEY`，与 `Authorization` 二选一。
+
+</ApiField>
+
+<ApiField name="Content-Type" type="string" label="数据交换格式" sourceUrl={officialUrl} required defaultValue="application/json">
+
+请求体使用 JSON 格式。
+
+</ApiField>
+
+<ApiField name="anthropic-version" type="string" label="API 版本" sourceUrl={officialUrl} defaultValue="2026-10-21">
+
+指定要使用的 Claude API 版本。当前官方示例使用 `2026-10-21`。
+
+</ApiField>
+
+<ApiField name="anthropic-user-profile-id" type="string" label="用户配置文件 ID" sourceUrl={officialUrl}>
+
+代表组织之外的其他主体发起请求时，用此请求头标记请求归属的用户配置文件。
+
+</ApiField>
+
+<ApiField name="anthropic-workspace-id" type="string" label="工作区 ID" sourceUrl={officialUrl}>
+
+当凭证可以访问多个工作区时，用于选择请求使用的工作区。仅属于单个工作区的凭证可以省略此字段。
+
+</ApiField>
+
+</div>
+
+### Body 参数
+
+<div className="ark-api-fields">
+
+<ApiField name="max_tokens" type="number" label="最大输出令牌数" sourceUrl={officialUrl} required>
+
+模型生成消息前允许生成的最大令牌数。模型可能在达到此上限前停止。设为 `0` 可以填充提示词缓存而不生成响应。不同模型支持的最大值不同。
+
+</ApiField>
+
+<ApiField name="messages" type="array" label="输入消息" sourceUrl={officialUrl} required>
+
+输入的对话消息列表。每条消息必须包含 `role` 和 `content`。`role` 支持 `user` 和 `assistant`，连续的同角色消息会合并为一个回合。最多支持 100,000 条消息。
+
+最后一条消息可以使用 `assistant` 角色为模型预填充部分回复，是否支持取决于模型。
+
+<div className="ark-api-fields">
+
+<ApiField name="role" type="string" label="消息角色" sourceUrl={officialUrl} required>
+
+`user` 或 `assistant`。连续的同角色消息会合并为一个回合。
+
+</ApiField>
+
+<ApiField name="content" type="string 或 array" label="消息内容" sourceUrl={officialUrl} required>
+
+可以直接传入字符串，也可以传入内容块数组。字符串等同于只包含一个 `text` 内容块的数组。数组中的内容块按 `type` 区分，支持文本、图像、文档、搜索结果、工具结果、思考内容和工具调用等类型。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="内容块类型" sourceUrl={officialUrl} required>
+
+输入内容块可使用 `text`、`image`、`document`、`search_result`、`tool_result`、`tool_reference`、`thinking`、`redacted_thinking` 和工具调用相关类型。输出内容块还可能包含 `server_tool_use`、`web_search_tool_result`、`web_fetch_tool_result`、代码执行结果和 `container_upload`。
+
+</ApiField>
+
+<ApiField name="text" type="string" label="文本内容" sourceUrl={officialUrl}>
+
+当 `type` 为 `text` 时填写。文本内容块还可以设置 `cache_control` 和 `citations`。
+
+</ApiField>
+
+<ApiField name="source" type="object" label="图像或文档来源" sourceUrl={officialUrl}>
+
+当 `type` 为 `image` 或 `document` 时使用。来源类型支持 `base64`、`url`、`file`，文档还支持 `content`。Base64 来源需要提供 `media_type` 和 `data`，URL 来源需要提供 `url`，文件来源需要提供 `file_id`。
+
+</ApiField>
+
+<ApiField name="cache_control" type="object 或 null" label="内容块缓存控制" sourceUrl={officialUrl}>
+
+固定使用 `{"type":"ephemeral"}`，可通过 `ttl` 选择 `5m` 或 `1h`。该字段可用于文本、图像、文档和工具结果等可缓存内容块。
+
+</ApiField>
+
+<ApiField name="tool_use_id" type="string" label="工具调用 ID" sourceUrl={officialUrl}>
+
+当 `type` 为 `tool_result` 时必填，用于关联模型返回的 `tool_use` 内容块。
+
+</ApiField>
+
+<ApiField name="is_error" type="boolean" label="工具是否出错" sourceUrl={officialUrl}>
+
+用于 `tool_result` 内容块，设为 `true` 表示工具执行失败。
+
+</ApiField>
+
+<ApiField name="id" type="string" label="工具调用 ID" sourceUrl={officialUrl}>
+
+当 `type` 为 `tool_use` 或服务器工具调用类型时返回，后续工具结果使用该 ID。
+
+</ApiField>
+
+<ApiField name="name" type="string" label="工具名称" sourceUrl={officialUrl}>
+
+当内容块表示工具调用时返回被调用的工具名称。
+
+</ApiField>
+
+<ApiField name="input" type="object" label="工具输入" sourceUrl={officialUrl}>
+
+当内容块为 `tool_use` 时返回工具输入对象，结构由工具的 `input_schema` 定义。
+
+</ApiField>
+
+<ApiField name="thinking" type="string" label="思考内容" sourceUrl={officialUrl}>
+
+当内容块类型为 `thinking` 时返回 Claude 的思考内容。该内容与 `signature` 应按原样传回后续请求。
+
+</ApiField>
+
+<ApiField name="signature" type="string" label="思考签名" sourceUrl={officialUrl}>
+
+用于验证思考内容由 Claude 生成。不要解析或修改此不透明字段。
+
+</ApiField>
+
+<ApiField name="data" type="string" label="已编辑思考内容" sourceUrl={officialUrl}>
+
+当内容块类型为 `redacted_thinking` 时返回。内容经过加密，后续多轮请求时应原样传回。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="model" type="string" label="模型" sourceUrl={officialUrl} required>
+
+用于完成请求的模型标识，例如 `claude-opus-5-5`。可用模型和模型参数以模型列表为准。
+
+</ApiField>
+
+<ApiField name="cache_control" type="object 或 null" label="顶层缓存控制" sourceUrl={officialUrl}>
+
+自动将缓存控制标记应用到请求中最后一个可缓存的内容块。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="缓存类型" sourceUrl={officialUrl} required>
+
+固定为 `ephemeral`。
+
+</ApiField>
+
+<ApiField name="ttl" type="string" label="缓存有效期" sourceUrl={officialUrl} defaultValue="5m">
+
+支持 `5m` 和 `1h`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="container" type="object 或 null" label="容器配置" sourceUrl={officialUrl}>
+
+复用跨请求的容器。
+
+<div className="ark-api-fields">
+
+<ApiField name="id" type="string 或 null" label="容器 ID" sourceUrl={officialUrl}>
+
+要复用的容器标识。
+
+</ApiField>
+
+<ApiField name="skills" type="array 或 null" label="加载的技能" sourceUrl={officialUrl}>
+
+最多 20 项。每项包含以下字段。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="技能类型" sourceUrl={officialUrl} required>
+
+支持 `anthropic`（内置技能）和 `custom`（自定义技能）。
+
+</ApiField>
+
+<ApiField name="skill_id" type="string" label="技能 ID" sourceUrl={officialUrl} required>
+
+技能标识，长度为 1–64 个字符。
+
+</ApiField>
+
+<ApiField name="version" type="string" label="技能版本" sourceUrl={officialUrl}>
+
+技能版本，或使用 `latest` 表示最新版本。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="diagnostics" type="object 或 null" label="诊断配置" sourceUrl={officialUrl}>
+
+通过上一次消息响应的 ID 诊断提示词缓存是否命中。
+
+<div className="ark-api-fields">
+
+<ApiField name="previous_message_id" type="string 或 null" label="上一条消息 ID" sourceUrl={officialUrl}>
+
+传入本客户端上一次 `/v1/messages` 响应的 `msg_...` ID。首次请求可传 `null`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="inference_geo" type="string 或 null" label="推理区域" sourceUrl={officialUrl}>
+
+指定推理处理区域。未指定时使用工作区的 `default_inference_geo`。
+
+</ApiField>
+
+<ApiField name="metadata" type="object" label="元数据" sourceUrl={officialUrl}>
+
+请求元数据对象。
+
+<div className="ark-api-fields">
+
+<ApiField name="user_id" type="string 或 null" label="外部用户 ID" sourceUrl={officialUrl}>
+
+用于标记与请求关联的外部用户。应使用 UUID、哈希或其他不可读标识，不要传入姓名、邮箱等个人信息，最大长度为 512。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="output_config" type="object 或 null" label="输出配置" sourceUrl={officialUrl}>
+
+配置模型输出。
+
+<div className="ark-api-fields">
+
+<ApiField name="effort" type="string 或 null" label="输出努力程度" sourceUrl={officialUrl}>
+
+支持 `low`、`medium`、`high`、`xhigh` 和 `max`。更高等级可能产生更完整的分析，但处理时间更长。
+
+</ApiField>
+
+<ApiField name="format" type="object 或 null" label="输出格式" sourceUrl={officialUrl}>
+
+使用 `{"type": "json_schema", "schema": {...}}` 约束 JSON 输出结构。`schema` 为 JSON Schema 对象。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="格式类型" sourceUrl={officialUrl} required>
+
+固定为 `json_schema`。
+
+</ApiField>
+
+<ApiField name="schema" type="object" label="JSON Schema" sourceUrl={officialUrl} required>
+
+定义模型输出 JSON 的结构。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="service_tier" type="string" label="服务层级" sourceUrl={officialUrl}>
+
+`auto` 表示有可用优先容量时使用优先容量，`standard_only` 表示仅使用标准容量。
+
+</ApiField>
+
+<ApiField name="speed" type="string 或 null" label="推理速度" sourceUrl={officialUrl}>
+
+`standard` 使用标准速度，`fast` 启用更高的输出令牌速率。部分模型使用此参数时还需要对应的 Beta 请求头。
+
+</ApiField>
+
+<ApiField name="stop_sequences" type="array[string]" label="停止序列" sourceUrl={officialUrl}>
+
+自定义停止生成的文本序列。模型遇到其中任一序列时停止，并在响应的 `stop_reason` 中返回 `stop_sequence`。
+
+</ApiField>
+
+<ApiField name="stream" type="boolean" label="流式输出" sourceUrl={officialUrl}>
+
+是否使用服务器发送事件增量返回响应。设为 `true` 时返回原始事件流，SDK 可以使用 `messages.stream()` 累积事件。
+
+</ApiField>
+
+<ApiField name="system" type="string 或 array" label="系统提示词" sourceUrl={officialUrl}>
+
+为 Claude 提供上下文、目标或行为规则。可以直接传入字符串，也可以传入文本内容块数组。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="内容类型" sourceUrl={officialUrl} required>
+
+固定为 `text`。
+
+</ApiField>
+
+<ApiField name="text" type="string" label="系统文本" sourceUrl={officialUrl} required>
+
+系统提示词内容。
+
+</ApiField>
+
+<ApiField name="cache_control" type="object 或 null" label="系统提示词缓存控制" sourceUrl={officialUrl}>
+
+在系统提示词内容块处设置提示词缓存断点，支持 `5m` 和 `1h`。
+
+</ApiField>
+
+<ApiField name="citations" type="array 或 null" label="系统提示词引用" sourceUrl={officialUrl}>
+
+系统文本内容块关联的文档引用位置。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="thinking" type="object" label="思考配置" sourceUrl={officialUrl}>
+
+配置 Claude 的思考模式。思考令牌计入 `max_tokens`。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="思考类型" sourceUrl={officialUrl} required>
+
+`adaptive` 让 Claude 自动决定是否思考以及思考量。`enabled` 启用手动扩展思考。
+
+</ApiField>
+
+<ApiField name="budget_tokens" type="integer" label="思考令牌预算" sourceUrl={officialUrl}>
+
+手动扩展思考时使用，最小值为 `1024`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="tool_choice" type="object" label="工具选择" sourceUrl={officialUrl}>
+
+配置模型如何使用请求中提供的工具。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="选择模式" sourceUrl={officialUrl} required>
+
+支持 `auto`、`any`、`tool` 和 `none`。分别表示自动选择、任意工具、指定工具和禁止工具。
+
+</ApiField>
+
+<ApiField name="name" type="string" label="工具名称" sourceUrl={officialUrl}>
+
+当选择模式指定某个工具时，填写工具的 `name`。
+
+</ApiField>
+
+<ApiField name="disable_parallel_tool_use" type="boolean" label="禁用并行工具调用" sourceUrl={officialUrl}>
+
+当选择模式为 `auto`、`any` 或 `tool` 时可用。设为 `true` 后，模型每轮最多返回一个工具调用。默认值为 `false`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="tools" type="array" label="工具定义" sourceUrl={officialUrl}>
+
+定义模型可以调用的工具。模型调用客户端工具时会返回 `tool_use` 内容块，客户端执行工具后可在后续 `user` 消息中使用 `tool_result` 内容块返回结果。
+
+<div className="ark-api-fields">
+
+<ApiField name="name" type="string" label="工具名称" sourceUrl={officialUrl} required>
+
+工具名称。
+
+</ApiField>
+
+<ApiField name="description" type="string" label="工具说明" sourceUrl={officialUrl}>
+
+工具用途说明，建议提供。
+
+</ApiField>
+
+<ApiField name="input_schema" type="object" label="输入参数 Schema" sourceUrl={officialUrl} required>
+
+工具输入参数的 JSON Schema，包括 `type`、`properties` 和 `required` 等字段。
+
+</ApiField>
+
+<ApiField name="type" type="string" label="工具类型" sourceUrl={officialUrl}>
+
+Anthropic 内置工具使用对应的工具类型。用户自定义工具可以省略此字段。
+
+</ApiField>
+
+<ApiField name="allowed_callers" type="array" label="允许的调用方" sourceUrl={officialUrl}>
+
+限制可以调用工具的主体。支持 `direct` 和代码执行调用方标识。
+
+</ApiField>
+
+<ApiField name="cache_control" type="object 或 null" label="工具缓存控制" sourceUrl={officialUrl}>
+
+在工具定义处设置提示词缓存断点，结构与顶层 `cache_control` 相同。
+
+</ApiField>
+
+<ApiField name="strict" type="boolean" label="严格工具使用" sourceUrl={officialUrl}>
+
+设为 `true` 时要求工具名称和工具输入通过 Schema 校验。
+
+</ApiField>
+
+<ApiField name="defer_loading" type="boolean" label="延迟加载" sourceUrl={officialUrl}>
+
+设为 `true` 时不将工具放入初始系统提示词，只有工具搜索返回其引用时才加载。
+
+</ApiField>
+
+<ApiField name="input_examples" type="array" label="输入示例" sourceUrl={officialUrl}>
+
+提供一组符合输入 Schema 的示例对象，帮助 Claude 了解工具调用方式。
+
+</ApiField>
+
+<ApiField name="eager_input_streaming" type="boolean" label="提前流式传输工具输入" sourceUrl={officialUrl}>
+
+控制是否为用户定义工具启用细粒度的工具输入流式传输。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+## 响应参数
+
+<div className="ark-api-fields">
+
+<ApiField name="id" type="string" label="消息 ID" sourceUrl={officialUrl}>
+
+服务端生成的消息标识，格式类似 `msg_...`。
+
+</ApiField>
+
+<ApiField name="container" type="object 或 null" label="容器信息" sourceUrl={officialUrl}>
+
+本次请求使用的容器信息。使用容器工具时返回，否则为 `null`。
+
+<div className="ark-api-fields">
+
+<ApiField name="id" type="string" label="容器 ID" sourceUrl={officialUrl}>
+
+本次请求使用的容器标识。
+
+</ApiField>
+
+<ApiField name="expires_at" type="string" label="过期时间" sourceUrl={officialUrl}>
+
+容器过期时间，格式为 RFC 3339 日期时间。
+
+</ApiField>
+
+<ApiField name="skills" type="array 或 null" label="已加载技能" sourceUrl={officialUrl}>
+
+返回已加载的技能及其解析后的版本。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="type" type="string" label="对象类型" sourceUrl={officialUrl}>
+
+消息对象固定返回 `message`。
+
+</ApiField>
+
+<ApiField name="role" type="string" label="角色" sourceUrl={officialUrl}>
+
+模型消息固定返回 `assistant`。
+
+</ApiField>
+
+<ApiField name="content" type="array" label="消息内容" sourceUrl={officialUrl}>
+
+模型返回的内容块数组。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="内容类型" sourceUrl={officialUrl} required>
+
+内容块类型可能是 `text`、`thinking`、`redacted_thinking`、`tool_use`、`server_tool_use`、`web_search_tool_result`、`web_fetch_tool_result`、代码执行结果或 `container_upload`。
+
+</ApiField>
+
+<ApiField name="text" type="string" label="文本内容" sourceUrl={officialUrl}>
+
+当内容类型为 `text` 时返回模型生成的文本。
+
+</ApiField>
+
+<ApiField name="id" type="string" label="工具调用 ID" sourceUrl={officialUrl}>
+
+当内容类型为 `tool_use` 时返回，用于后续工具结果关联。
+
+</ApiField>
+
+<ApiField name="name" type="string" label="工具名称" sourceUrl={officialUrl}>
+
+当内容类型为 `tool_use` 时返回被调用的工具名称。
+
+</ApiField>
+
+<ApiField name="input" type="object" label="工具输入" sourceUrl={officialUrl}>
+
+当内容类型为 `tool_use` 时返回工具输入参数。
+
+</ApiField>
+
+<ApiField name="thinking" type="string" label="思考内容" sourceUrl={officialUrl}>
+
+当内容类型为 `thinking` 时返回 Claude 的思考内容。
+
+</ApiField>
+
+<ApiField name="signature" type="string" label="思考签名" sourceUrl={officialUrl}>
+
+用于验证思考内容由 Claude 生成。后续请求需要原样传回。
+
+</ApiField>
+
+<ApiField name="data" type="string" label="已编辑思考内容" sourceUrl={officialUrl}>
+
+当内容类型为 `redacted_thinking` 时返回的加密内容，后续请求需要原样传回。
+
+</ApiField>
+
+<ApiField name="citations" type="array 或 null" label="引用" sourceUrl={officialUrl}>
+
+文本内容块关联的引用位置。引用类型可包含字符位置、页位置、内容块位置、搜索结果位置和网页搜索结果位置。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="diagnostics" type="object 或 null" label="诊断信息" sourceUrl={officialUrl}>
+
+当请求设置了 `diagnostics.previous_message_id` 时，用于说明提示词缓存是否发生差异。没有缓存差异或未启用诊断时为 `null`。
+
+<div className="ark-api-fields">
+
+<ApiField name="cache_miss_reason" type="object 或 null" label="缓存未命中原因" sourceUrl={officialUrl}>
+
+说明提示词缓存未能复用的原因，以及未命中的输入令牌数。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="model" type="string" label="模型" sourceUrl={officialUrl}>
+
+实际生成响应的模型标识。
+
+</ApiField>
+
+<ApiField name="stop_reason" type="string 或 null" label="停止原因" sourceUrl={officialUrl}>
+
+模型停止生成的原因，例如 `end_turn`、`max_tokens`、`stop_sequence` 或 `tool_use`。
+
+</ApiField>
+
+<ApiField name="stop_details" type="object 或 null" label="停止详情" sourceUrl={officialUrl}>
+
+当模型因策略原因拒绝生成时返回结构化详情。没有额外停止信息时为 `null`。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="停止详情类型" sourceUrl={officialUrl}>
+
+拒答详情固定为 `refusal`。
+
+</ApiField>
+
+<ApiField name="category" type="string 或 null" label="策略类别" sourceUrl={officialUrl}>
+
+触发拒答的策略类别，例如 `cyber`、`bio`、`frontier_llm` 或其他官方支持的类别。
+
+</ApiField>
+
+<ApiField name="explanation" type="string" label="停止说明" sourceUrl={officialUrl}>
+
+说明模型停止生成或拒答的原因。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="stop_sequence" type="string 或 null" label="命中的停止序列" sourceUrl={officialUrl}>
+
+当 `stop_reason` 为 `stop_sequence` 时，返回触发停止的文本序列。
+
+</ApiField>
+
+<ApiField name="usage" type="object" label="用量统计" sourceUrl={officialUrl}>
+
+返回输入和输出令牌数，以及提示词缓存、服务层级、推理区域和服务器工具调用的用量信息。
+
+<div className="ark-api-fields">
+
+<ApiField name="input_tokens" type="integer" label="输入令牌数" sourceUrl={officialUrl}>
+
+本次请求消耗的输入令牌数。
+
+</ApiField>
+
+<ApiField name="output_tokens" type="integer" label="输出令牌数" sourceUrl={officialUrl}>
+
+本次响应生成的输出令牌数。
+
+</ApiField>
+
+<ApiField name="cache_creation_input_tokens" type="integer" label="缓存创建输入令牌数" sourceUrl={officialUrl}>
+
+创建提示词缓存消耗的输入令牌数。
+
+</ApiField>
+
+<ApiField name="cache_read_input_tokens" type="integer" label="缓存读取输入令牌数" sourceUrl={officialUrl}>
+
+从提示词缓存读取的输入令牌数。
+
+</ApiField>
+
+<ApiField name="cache_creation" type="object" label="缓存创建明细" sourceUrl={officialUrl}>
+
+按缓存有效期拆分创建缓存消耗的输入令牌数。
+
+<div className="ark-api-fields">
+
+<ApiField name="ephemeral_5m_input_tokens" type="integer" label="5 分钟缓存令牌数" sourceUrl={officialUrl}>
+
+5 分钟有效缓存消耗的输入令牌数。
+
+</ApiField>
+
+<ApiField name="ephemeral_1h_input_tokens" type="integer" label="1 小时缓存令牌数" sourceUrl={officialUrl}>
+
+1 小时有效缓存消耗的输入令牌数。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="inference_geo" type="string" label="推理区域" sourceUrl={officialUrl}>
+
+本次请求实际使用的推理区域。
+
+</ApiField>
+
+<ApiField name="output_tokens_details" type="object" label="输出令牌明细" sourceUrl={officialUrl}>
+
+输出令牌中的内部思考令牌数量。
+
+<div className="ark-api-fields">
+
+<ApiField name="thinking_tokens" type="integer" label="思考令牌数" sourceUrl={officialUrl}>
+
+模型生成的内部思考令牌数。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="server_tool_use" type="object" label="服务器工具用量" sourceUrl={officialUrl}>
+
+服务器工具调用次数。
+
+<div className="ark-api-fields">
+
+<ApiField name="web_search_requests" type="integer" label="网页搜索次数" sourceUrl={officialUrl}>
+
+网页搜索工具的调用次数。
+
+</ApiField>
+
+<ApiField name="web_fetch_requests" type="integer" label="网页抓取次数" sourceUrl={officialUrl}>
+
+网页抓取工具的调用次数。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="service_tier" type="string" label="服务层级" sourceUrl={officialUrl}>
+
+本次请求实际使用的服务层级。
+
+</ApiField>
+
+<ApiField name="speed" type="string" label="推理速度" sourceUrl={officialUrl}>
+
+本次请求实际使用的推理速度，例如 `standard` 或 `fast`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+</div>
+<aside className="ark-api-examples" aria-label="接口示例">
+
+## 输入示例
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```sh title="创建消息"
+curl "${base_url}/v1/messages" \
+  -H 'Content-Type: application/json' \
+  -H 'anthropic-version: 2026-10-21' \
+  -H "Authorization: Bearer $ANTHROPIC_API_KEY" \
+  --max-time 600 \
+  -d '{
+        "max_tokens": 1024,
+        "messages": [
+          {
+            "content": "Hello, world",
+            "role": "user"
+          }
+        ],
+        "model": "claude-opus-5-5",
+        "stream": false,
+        "system": [
+          {
+            "text": "Today'\''s date is 2024-06-01.",
+            "type": "text"
+          }
+        ],
+        "thinking": {
+          "type": "adaptive"
+        },
+        "tools": [
+          {
+            "input_schema": {
+              "type": "object",
+              "properties": {
+                "location": "bar",
+                "unit": "bar"
+              },
+              "required": [
+                "location"
+              ]
+            },
+            "name": "name"
+          }
+        ]
+      }'
+```
+
+</CodeTabs>
+</div>
+
+## 输出示例
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```json title="创建消息响应"
+{
+  "id": "msg_013Zva2CMHLNnXjNJJKqJ2EF",
+  "container": {
+    "id": "container_011CpZohnwH4vuy7gazohgSP",
+    "expires_at": "2019-12-27T18:11:19.117Z",
+    "skills": [
+      {
+        "skill_id": "pdf",
+        "type": "anthropic",
+        "version": "latest"
+      }
+    ]
+  },
+  "content": [
+    {
+      "citations": null,
+      "type": "text",
+      "text": "Hi! My name is Claude."
+    }
+  ],
+  "diagnostics": null,
+  "model": "claude-opus-5-5",
+  "role": "assistant",
+  "stop_details": null,
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "type": "message",
+  "usage": {
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 0,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "cache_creation_input_tokens": 2051,
+    "cache_read_input_tokens": 2051,
+    "inference_geo": "global",
+    "input_tokens": 2095,
+    "output_tokens": 503,
+    "output_tokens_details": {
+      "thinking_tokens": 0
+    },
+    "server_tool_use": {
+      "web_fetch_requests": 2,
+      "web_search_requests": 0
+    },
+    "service_tier": "standard",
+    "speed": "standard"
+  }
+}
+```
+
+</CodeTabs>
+</div>
+
+</aside>
+</div>
+</div>

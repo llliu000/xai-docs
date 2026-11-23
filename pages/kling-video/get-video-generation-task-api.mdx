@@ -1,0 +1,319 @@
+---
+title: 查询视频生成任务
+description: 按任务 ID 查询可灵 4.0 和 4.0 Flash 视频的生成进度、结果及用量。
+fullWidth: true
+centered: false
+---
+
+import { ApiField } from "../doubao-video/ApiField";
+
+export const officialUrl = "https://kling.ai/document-api/api/video/4-0";
+
+<p className="ark-api-endpoint">
+  <strong>GET</strong>
+  <code apiPath="/tasks" defaultBaseUrl="https://api-singapore.klingai.com" />
+</p>
+
+使用[创建接口](/kling-video/create-video-generation-task-api)返回的 `data.id` 或提交时指定的自定义 ID 查询异步任务。任务成功后，从视频产物的 `url` 获取结果。
+
+<div className="ark-api-reference">
+<div className="ark-api-columns">
+<div>
+
+## 鉴权
+
+本接口支持以下鉴权方式，详情见 [可灵官方鉴权说明](https://kling.ai/document-api/apiReference/commonInfo)。
+
+- API Key 鉴权。前往 [可灵 API Key 管理](https://kling.ai/dev/api-key) 获取 API Key。
+
+---
+
+## 请求参数
+
+### 请求头
+
+<div className="ark-api-fields">
+
+<ApiField name="Authorization" type="string" label="API Key" sourceUrl={officialUrl} required>
+
+请求头的值为 `Bearer $KLING_API_KEY`，`Bearer` 与密钥之间保留一个空格。
+
+</ApiField>
+
+<ApiField name="Content-Type" type="string" label="数据交换格式" sourceUrl={officialUrl} required defaultValue="application/json">
+
+指定 JSON 数据格式，值为 `application/json`。
+
+</ApiField>
+
+</div>
+
+### URL 查询参数
+
+`task_ids` 和 `external_task_ids` 二选一。支持批量查询。
+
+<div className="ark-api-fields">
+
+<ApiField name="task_ids" type="string" label="系统任务 ID" sourceUrl={officialUrl} required="conditional">
+
+填入[创建接口](/kling-video/create-video-generation-task-api)返回的 `data.id`。可用英文逗号分隔多个 ID。使用此参数时省略 `external_task_ids`。
+
+</ApiField>
+
+<ApiField name="external_task_ids" type="string" label="自定义任务 ID" sourceUrl={officialUrl} required="conditional">
+
+填入创建时指定的 `options.external_task_id`。可用英文逗号分隔多个 ID。使用此参数时省略 `task_ids`。
+
+</ApiField>
+
+</div>
+
+## 响应参数
+
+<div className="ark-api-fields">
+
+<ApiField name="code" type="integer" label="接口返回码" sourceUrl={officialUrl}>
+
+成功时为 `0`。失败时可查阅[可灵官方错误码](https://kling.ai/document-api/api/get-started/error-codes)。
+
+</ApiField>
+
+<ApiField name="message" type="string" label="接口返回信息" sourceUrl={officialUrl}>
+
+描述本次请求的处理结果。
+
+</ApiField>
+
+<ApiField name="request_id" type="string" label="请求 ID" sourceUrl={officialUrl}>
+
+系统生成的请求标识，可用于问题排查。
+
+</ApiField>
+
+<ApiField name="data" type="array" label="查询结果" sourceUrl={officialUrl}>
+
+包含查到的任务，每个元素对应一个任务。
+
+</ApiField>
+
+</div>
+
+### 任务字段
+
+任务字段位于 `data[]` 的每个元素中。
+
+<div className="ark-api-fields">
+
+<ApiField name="id" type="string" label="任务 ID" sourceUrl={officialUrl}>
+
+可灵系统分配的任务 ID。
+
+</ApiField>
+
+<ApiField name="status" type="string" label="任务状态" sourceUrl={officialUrl}>
+
+| 值 | 含义 |
+| --- | --- |
+| `submitted` | 已提交 |
+| `processing` | 正在处理 |
+| `succeeded` | 生成成功 |
+| `failed` | 生成失败 |
+
+</ApiField>
+
+<ApiField name="message" type="string" label="任务状态信息" sourceUrl={officialUrl}>
+
+任务失败时可查看失败原因。
+
+</ApiField>
+
+<ApiField name="create_time" type="integer" label="创建时间" sourceUrl={officialUrl}>
+
+任务创建时间，Unix 毫秒时间戳。
+
+</ApiField>
+
+<ApiField name="update_time" type="integer" label="更新时间" sourceUrl={officialUrl}>
+
+任务最近更新时间，Unix 毫秒时间戳。
+
+</ApiField>
+
+<ApiField name="external_id" type="string" label="自定义任务 ID" sourceUrl={officialUrl}>
+
+创建任务时通过 `options.external_task_id` 提供的 ID。
+
+</ApiField>
+
+<ApiField name="outputs" type="array" label="生成结果" sourceUrl={officialUrl}>
+
+成功后可从视频产物的 `url` 获取视频。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="产物类型" sourceUrl={officialUrl}>
+
+视频生成结果的类型为 `video`。通用任务接口中其他任务的产物可为 `image`、`audio`、`element` 或 `voice`。
+
+</ApiField>
+
+<ApiField name="id" type="string" label="产物 ID" sourceUrl={officialUrl}>
+
+系统分配的视频 ID。
+
+</ApiField>
+
+<ApiField name="url" type="string" label="视频地址" sourceUrl={officialUrl}>
+
+带防盗链的生成结果地址。生成结果保留 30 天。
+
+</ApiField>
+
+<ApiField name="watermark_url" type="string" label="带水印视频地址" sourceUrl={officialUrl}>
+
+创建时启用 `options.watermark_info.enabled` 可获取带水印结果的地址。
+
+</ApiField>
+
+<ApiField name="duration" type="string" label="实际视频时长" sourceUrl={officialUrl}>
+
+视频文件的实际时长，单位为秒。计费时长见 `usage.output_duration`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="usage" type="object" label="计费用量" sourceUrl={officialUrl}>
+
+Kling 4.0 和 Kling 4.0 Flash 任务结束且有可用统计时返回。
+
+<div className="ark-api-fields">
+
+<ApiField name="input_duration" type="string" label="计费输入时长" sourceUrl={officialUrl}>
+
+有视频输入时返回。包括 `feature_video`、`base_video` 和视频角色主体的时长，单位为秒，保留两位小数。可灵会先对输入进行标准化处理，因此该值可能与原始文件总时长略有差异。
+
+</ApiField>
+
+<ApiField name="output_duration" type="string" label="计费输出时长" sourceUrl={officialUrl}>
+
+单位为秒。依次采用 `settings.duration`、提示词中指定的时长、`base_video` 四舍五入后的秒数。均未提供时使用 10 秒。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="billing" type="array" label="扣费明细" sourceUrl={officialUrl}>
+
+每条记录对应一个扣费账户或资源类型。同一任务使用多个余额类型时可返回多条记录。
+
+<div className="ark-api-fields">
+
+<ApiField name="charge_type" type="string" label="扣费账户类型" sourceUrl={officialUrl}>
+
+`cash` 表示余额扣费，`unit` 表示资源包扣费。
+
+</ApiField>
+
+<ApiField name="cash_type" type="string" label="余额类型" sourceUrl={officialUrl}>
+
+仅余额扣费适用。`balance` 为正式额度、`test_balance` 为测试额度、`reward_balance` 为奖励额度。
+
+</ApiField>
+
+<ApiField name="amount" type="string" label="扣减金额或数量" sourceUrl={officialUrl}>
+
+余额扣费时为折后扣减金额，资源包扣费时为扣减用量。
+
+</ApiField>
+
+<ApiField name="currency" type="string" label="扣费币种" sourceUrl={officialUrl}>
+
+仅余额扣费适用，值为 `CNY` 或 `USD`。
+
+</ApiField>
+
+<ApiField name="package_type" type="string" label="资源包类型" sourceUrl={officialUrl}>
+
+仅资源包扣费适用，支持 `video`、`image`、`audio`。
+
+</ApiField>
+
+<ApiField name="list_price" type="string" label="余额扣费原价" sourceUrl={officialUrl}>
+
+仅余额扣费适用。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+</div>
+<aside className="ark-api-examples" aria-label="接口示例">
+
+## 输入示例
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```sh title="系统任务 ID"
+curl -sS --get \
+  "${base_url}/tasks" \
+  --header "Authorization: Bearer ${KLING_API_KEY}" \
+  --header 'Content-Type: application/json' \
+  --data-urlencode "task_ids=${TASK_ID}"
+```
+
+```sh title="自定义任务 ID"
+curl -sS --get \
+  "${base_url}/tasks" \
+  --header "Authorization: Bearer ${KLING_API_KEY}" \
+  --header 'Content-Type: application/json' \
+  --data-urlencode "external_task_ids=${EXTERNAL_TASK_ID}"
+```
+
+</CodeTabs>
+</div>
+
+## 输出示例
+
+```json
+{
+  "code": 0,
+  "message": "success",
+  "request_id": "req-demo",
+  "data": [
+    {
+      "id": "893605946402811985",
+      "status": "succeeded",
+      "message": "",
+      "create_time": 1781080778802,
+      "update_time": 1781080794151,
+      "external_id": "demo-video-01",
+      "outputs": [
+        {
+          "type": "video",
+          "id": "demo-video",
+          "url": "https://example.com/generated-video.mp4",
+          "duration": "8.0"
+        }
+      ],
+      "usage": {
+        "input_duration": "8.03",
+        "output_duration": "8"
+      }
+    }
+  ]
+}
+```
+
+</aside>
+</div>
+</div>

@@ -1,0 +1,298 @@
+---
+title: 查询视频生成任务
+description: 按任务 ID 查询 Seedance 任务状态、产物和用量。
+fullWidth: true
+centered: false
+---
+
+import { QueryApiField } from "./ApiField";
+
+<p className="ark-api-endpoint">
+  <strong>GET</strong>
+  <code apiPath="/api/v3/contents/generations/tasks/{id}" defaultBaseUrl="https://ark.cn-beijing.volces.com" />
+</p>
+
+通过[创建任务](/doubao-video/create-video-generation-task-api)返回的 ID 查询单个任务。生成成功后，从 `content.video_url` 读取视频地址。
+
+任务 ID 的有效期从 `created_at` 起算。普通任务的 ID 有效期为 7 天。2026 年 10 月 28 日 10:00（UTC+8）起创建的样片 ID 有效期为 14 天，此前创建的为 7 天。过期的样片 ID 无法用于生成正式视频。
+
+<div className="ark-api-reference">
+<div className="ark-api-columns">
+<div>
+
+## 鉴权
+
+本接口支持以下鉴权方式，详情见 [Base URL 及鉴权](https://console.volcengine.com/ark/region:cn-beijing/docs/base-url-and-authentication)。
+
+- API Key 鉴权。前往 [API Key 管理](https://ark.volcengine.com/region:cn-beijing/apiKey) 获取长效 API Key。
+
+---
+
+## 请求参数
+
+### Path 参数
+
+<div className="ark-api-fields">
+<QueryApiField name="id" type="string" label="任务 ID" sourceText="Path 参数" required>
+
+将创建接口返回的 `id` 填到 URL 的最后一段。
+
+</QueryApiField>
+</div>
+
+## 响应参数
+
+<div className="ark-api-fields">
+<QueryApiField name="id" type="string" label="任务 ID" sourceText="视频生成任务 ID">
+
+当前视频生成任务的 ID。
+
+</QueryApiField>
+
+<QueryApiField name="model" type="string" label="模型名称与版本">
+
+执行该任务的模型，格式为 `模型名称-版本`。
+
+</QueryApiField>
+
+<QueryApiField name="status" type="string" label="任务状态">
+
+任务的当前状态，取值见下表。
+
+| `status` | 含义 |
+| --- | --- |
+| `queued` | 已进入队列，等待执行。 |
+| `running` | 正在生成，可继续查询。 |
+| `cancelled` | 只有排队中的任务可以取消。取消记录会在 24 小时后删除。 |
+| `succeeded` | 生成完成，可读取产物。 |
+| `failed` | 执行失败，查看错误字段。 |
+| `expired` | 达到执行时限，任务已停止。 |
+
+</QueryApiField>
+
+<QueryApiField name="content" type="object" label="输出内容">
+
+生成的产物。
+
+<div className="ark-api-fields">
+<QueryApiField name="last_frame_url" type="string" label="尾帧图像 URL" sourceText="content.last_frame_url">
+
+尾帧图像地址。仅在创建时设 `return_last_frame: true` 后返回，链接 24 小时内有效。
+
+</QueryApiField>
+
+<QueryApiField name="video_url" type="string" label="视频 URL" sourceText="content.video_url">
+
+生成的视频地址，链接 24 小时内有效。Seedance 2.5 系列每个视频链接最多下载 100 次。可通过火山引擎 TOS 数据订阅转存产物。
+
+</QueryApiField>
+</div>
+
+</QueryApiField>
+
+<QueryApiField name="created_at" type="integer" label="创建时间">
+
+创建时间，Unix 时间戳，单位为秒。
+
+</QueryApiField>
+
+<QueryApiField name="draft" type="boolean" label="是否为 Draft 视频">
+
+Seedance 2.5 返回的样片标记。`true` 表示样片，`false` 表示正式视频。
+
+</QueryApiField>
+
+<QueryApiField name="duration" type="integer" label="视频时长（秒）">
+
+生成时长，以秒计。创建时未设置 `frames` 才返回。
+
+</QueryApiField>
+
+<QueryApiField name="error" type="object" label="错误信息">
+
+成功时返回 `null`。失败时包含错误详情。2.5 系列的部分任务会在出队执行时才返回错误。
+
+<div className="ark-api-fields">
+<QueryApiField name="code" type="string" label="错误码" sourceText="error.code">
+
+可用于程序判断的错误码。
+
+</QueryApiField>
+
+<QueryApiField name="message" type="string" label="错误提示信息" sourceText="error.message">
+
+失败原因的文字说明。
+
+</QueryApiField>
+</div>
+
+</QueryApiField>
+
+<QueryApiField name="execution_expires_after" type="integer" label="任务超时阈值（秒）">
+
+从提交起算的时限，单位为秒。超过时限的未完成任务会停止并标记为 `expired`。
+
+</QueryApiField>
+
+<QueryApiField name="frames" type="integer" label="视频帧数">
+
+视频帧数。创建时设置了 `frames` 才返回，且与 `duration` 互斥。
+
+</QueryApiField>
+
+<QueryApiField name="framespersecond" type="integer" label="视频帧率">
+
+视频每秒帧数。
+
+</QueryApiField>
+
+<QueryApiField name="generate_audio" type="boolean" label="是否生成同步音频">
+
+2.5 和 2.0 系列返回。`true` 表示带同步音频，`false` 表示无声。
+
+</QueryApiField>
+
+<QueryApiField name="output_format" type="string" label="输出格式">
+
+2.5 系列返回的实际文件格式，取 `mp4` 或 `mov`。
+
+</QueryApiField>
+
+<QueryApiField name="priority" type="integer" label="执行优先级">
+
+与创建请求中指定的优先级相同，0–9，数字越大优先级越高。官方列出的支持范围为 Seedance 2.5 和 Seedance 2.0 系列。
+
+</QueryApiField>
+
+<QueryApiField name="ratio" type="string" label="宽高比">
+
+实际输出宽高比。
+
+</QueryApiField>
+
+<QueryApiField name="resolution" type="string" label="分辨率">
+
+实际输出分辨率。
+
+</QueryApiField>
+
+<QueryApiField name="safety_identifier" type="string" label="终端用户标识">
+
+创建时传入的终端用户标识。若设置了该值，查询时原样返回。
+
+</QueryApiField>
+
+<QueryApiField name="seed" type="integer" label="随机种子">
+
+本次生成所用的随机种子。
+
+</QueryApiField>
+
+<QueryApiField name="service_tier" type="string" label="服务等级">
+
+实际处理任务所用的服务等级。
+
+</QueryApiField>
+
+<QueryApiField name="tools" type="object[]" label="实际使用的工具">
+
+模型本次实际使用的工具。未用工具时省略，支持 Seedance 2.5 和 2.0 系列。
+
+<div className="ark-api-fields">
+<QueryApiField name="type" type="string" label="工具类型" sourceText="tools.type">
+
+实际使用的工具类型。`web_search` 表示联网搜索。
+
+</QueryApiField>
+</div>
+
+</QueryApiField>
+
+<QueryApiField name="updated_at" type="integer" label="更新时间">
+
+当前状态最后更新的 Unix 时间戳，单位为秒。
+
+</QueryApiField>
+
+<QueryApiField name="usage" type="object" label="token 用量">
+
+本次生成的 token 和工具用量。
+
+<div className="ark-api-fields">
+<QueryApiField name="completion_tokens" type="integer" label="生成视频消耗的 token 数" sourceText="usage.completion_tokens">
+
+生成视频所计的 token 数。Seedance 2.5 和 2.0 系列低于最低用量时，返回并按最低用量计费。
+
+</QueryApiField>
+
+<QueryApiField name="total_tokens" type="integer" label="总 token 数" sourceText="usage.total_tokens">
+
+总 token 数。视频生成的输入 token 按 0 计，因此等于 `usage.completion_tokens`。
+
+</QueryApiField>
+
+<QueryApiField name="tool_usage" type="object" label="工具用量" sourceText="usage.tool_usage">
+
+工具调用用量。
+
+<div className="ark-api-fields">
+<QueryApiField name="web_search" type="integer" label="联网搜索调用次数" sourceText="usage.tool_usage.web_search">
+
+联网搜索的实际调用次数，仅在开启联网搜索后返回。
+
+</QueryApiField>
+</div>
+
+</QueryApiField>
+</div>
+
+</QueryApiField>
+</div>
+
+更多详情内容请见[火山官方文档](https://console.volcengine.com/ark/region:cn-beijing/docs/get-video-generation-task-api)
+
+</div>
+<aside className="ark-api-examples" aria-label="接口示例">
+
+## 输入示例
+
+用实际返回的任务 ID 替换 `TASK_ID`，并从环境变量读取 API Key。
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```sh title="cURL"
+curl --fail-with-body \
+  --header "Authorization: Bearer $ARK_API_KEY" \
+  --url "${base_url}/api/v3/contents/generations/tasks/$TASK_ID"
+```
+
+</CodeTabs>
+</div>
+
+## 输出示例
+
+```json
+{
+  "id": "cgt-20261122103000-demo",
+  "model": "doubao-seedance-2-0-260128",
+  "status": "succeeded",
+  "content": {
+    "video_url": "https://example.com/generated-video.mp4"
+  },
+  "created_at": 1795314600,
+  "updated_at": 1795314662,
+  "duration": 5,
+  "ratio": "16:9",
+  "resolution": "720p",
+  "framespersecond": 24,
+  "usage": {
+    "completion_tokens": 108900,
+    "total_tokens": 108900
+  }
+}
+```
+
+</aside>
+</div>
+</div>

@@ -1,0 +1,545 @@
+---
+title: OpenAI格式
+description: 使用 OpenAI Images API 根据提示词生成图像，支持普通和流式响应。
+fullWidth: true
+centered: false
+---
+
+import { ApiField } from "../doubao-video/ApiField";
+
+export const officialUrl = "https://developers.openai.com/api/reference/resources/images/methods/generate?translationFallback=zh-Hans";
+export const authUrl = "https://developers.openai.com/api/reference/overview#authentication";
+
+<p className="ark-api-endpoint">
+  <strong>POST</strong>
+  <code apiPath="/v1/images/generations" defaultBaseUrl="https://api.openai.com" />
+</p>
+
+提交文本提示词生成一张或多张图像。普通请求从 `data[].b64_json` 取图，流式请求从 `image_generation.completed` 事件取最终图像。[OpenAI 官方接口参考](https://developers.openai.com/api/reference/resources/images/methods/generate?translationFallback=zh-Hans)
+
+<div className="ark-api-reference">
+<div className="ark-api-columns">
+<div>
+
+## 鉴权
+
+本接口支持以下鉴权方式，详情见 [OpenAI 官方鉴权说明](https://developers.openai.com/api/reference/overview#authentication)。
+
+- API Key 鉴权。前往 [OpenAI API Key 管理](https://platform.openai.com/api-keys) 获取 API Key。
+
+---
+
+## 请求参数
+
+### 请求头
+
+<div className="ark-api-fields">
+
+<ApiField name="Authorization" type="string" label="API Key" sourceUrl={authUrl} sourceText="Authorization" required>
+
+使用 `Bearer $OPENAI_API_KEY`。
+
+</ApiField>
+
+<ApiField name="Content-Type" type="string" label="请求内容类型" sourceUrl={officialUrl} sourceText="Content-Type" required>
+
+使用 `application/json`。
+
+</ApiField>
+
+<ApiField name="OpenAI-Organization" type="string" label="组织 ID" sourceUrl={authUrl} sourceText="OpenAI-Organization">
+
+需要明确指定计费组织时传入。
+
+</ApiField>
+
+<ApiField name="OpenAI-Project" type="string" label="项目 ID" sourceUrl={authUrl} sourceText="OpenAI-Project">
+
+需要明确指定归属项目时传入。
+
+</ApiField>
+
+</div>
+
+### Body 参数
+
+<div className="ark-api-fields">
+
+<ApiField name="model" type="string" label="图像模型" sourceUrl={officialUrl} sourceText="model" required>
+
+显式指定要调用的模型。
+
+| 系列 | 官方列出的可用模型 ID |
+| --- | --- |
+| GPT Image 2.6 | `gpt-image-2.6-sunburst`、`gpt-image-2.6-flare` |
+| GPT Image 2.5 | `gpt-image-2.5-sunburst`、`gpt-image-2.5-flare`，以及各自带 `-2026-09-08` 后缀的快照 |
+| GPT Image 2 | `gpt-image-2`、`gpt-image-2-2026-04-21` |
+| 其他 | `gpt-image-1.5`、`gpt-image-1-mini`、`chatgpt-image-latest` |
+
+`gpt-image-1` 已于 2026 年 10 月 23 日停用。`dall-e-2` 和 `dall-e-3` 作为已退役型号保留在接口类型中。
+
+</ApiField>
+
+<ApiField name="prompt" type="string" label="图像提示词" sourceUrl={officialUrl} sourceText="prompt" required>
+
+描述希望生成的图像，可包含主题、构图和风格。最多 32,000 个字符。
+
+</ApiField>
+
+<ApiField name="background" type="string 或 null" label="背景" sourceUrl={officialUrl} sourceText="background" defaultValue="auto">
+
+GPT Image 模型支持 `auto`、`transparent`（透明）和 `opaque`（不透明）。GPT Image 2.5 Sunburst 和 Flare 及其快照支持透明与不透明背景。GPT Image 2 及其 `2026-04-21` 快照的透明背景处于预览阶段。设置为 `transparent` 时，输出格式使用 `png` 或 `webp`。
+
+</ApiField>
+
+<ApiField name="complexity" type="string 或 null" label="画面规划复杂度" sourceUrl={officialUrl} sourceText="complexity">
+
+支持 `low`、`medium` 和 `high`。控制绘制前的规划量，渲染质量由 `quality` 单独设置。省略时由图像模型决定。生成 SVG 时，此项作用于用于绘制 SVG 的参考图。
+
+</ApiField>
+
+<ApiField name="frame_count" type="integer 或 null" label="GIF 帧数" sourceUrl={officialUrl} sourceText="frame_count" defaultValue="9">
+
+仅在 `output_format: "gif"` 时使用，范围为 2–16。所选模型需有 GIF 预览权限，尺寸、帧数和生成数量须满足模型限制。
+
+</ApiField>
+
+<ApiField name="frame_duration_ms" type="integer 或 null" label="GIF 每帧时长" sourceUrl={officialUrl} sourceText="frame_duration_ms" defaultValue="200">
+
+仅在 `output_format: "gif"` 时使用，单位为毫秒。接口参考规定最小值为 20，实际编码四舍五入到最接近的 10 毫秒，编码延时上限为 655,350 毫秒。官方生成指南列出的请求取值范围为 20–2,000 毫秒。
+
+</ApiField>
+
+<ApiField name="moderation" type="string 或 null" label="内容审核级别" sourceUrl={officialUrl} sourceText="moderation" defaultValue="auto">
+
+适用于 GPT Image 模型。`auto` 使用标准审核设置，`low` 使用较宽松的审核设置。
+
+</ApiField>
+
+<ApiField name="n" type="integer 或 null" label="生成数量" sourceUrl={officialUrl} sourceText="n" defaultValue="1">
+
+取值为 1–10。生成 SVG 时固定为 `1`。
+
+</ApiField>
+
+<ApiField name="output_compression" type="integer 或 null" label="输出压缩级别" sourceUrl={officialUrl} sourceText="output_compression" defaultValue="100">
+
+取值为 0–100。适用于 GPT Image 的 `jpeg` 和 `webp` 输出。
+
+</ApiField>
+
+<ApiField name="output_format" type="string 或 null" label="输出格式" sourceUrl={officialUrl} sourceText="output_format" defaultValue="png">
+
+GPT Image 模型可输出 `png`、`webp`、`jpeg`、`gif` 或 `svg`，具体取决于模型和权限。GIF 与 SVG 使用普通 JSON 返回，均不支持流式返回、中间图像或自定义压缩。SVG 返回的是经 Base64 编码的 SVG 文件内容。[OpenAI 图像生成指南](https://developers.openai.com/api/docs/guides/image-generation)
+
+</ApiField>
+
+<ApiField name="partial_images" type="integer 或 null" label="流式中间图像数量" sourceUrl={officialUrl} sourceText="partial_images" defaultValue="0">
+
+仅用于流式请求，取值为 0–3。`0` 时只发送最终图像事件。若最终图像先完成，返回的中间图像数量可能少于请求值。
+
+</ApiField>
+
+<ApiField name="quality" type="string 或 null" label="渲染质量" sourceUrl={officialUrl} sourceText="quality" defaultValue="auto">
+
+`auto` 由模型自动选择。GPT Image 通用档位为 `low`、`medium` 和 `high`。官方接口明确列出 GPT Image 2.5 Sunburst 和 Flare 及其快照也支持 `xhigh` 和 `max`。`standard` 和 `hd` 是旧版接口枚举。
+
+</ApiField>
+
+<ApiField name="response_format" type="string 或 null" label="旧版返回形式" sourceUrl={officialUrl} sourceText="response_format">
+
+`url`、`b64_json` 是已退役模型的返回形式选项。GPT Image 固定通过 `data[].b64_json` 返回 Base64 图像，不支持此请求字段。
+
+</ApiField>
+
+<ApiField name="safety_identifier" type="string 或 null" label="终端用户标识" sourceUrl={officialUrl} sourceText="safety_identifier">
+
+用于标记终端用户，最多 128 个字符。可以传入散列标识，避免发送明文个人信息。此值为空或省略时，服务会在有值的情况下使用旧字段 `user`。
+
+</ApiField>
+
+<ApiField name="size" type="string 或 null" label="图像尺寸" sourceUrl={officialUrl} sourceText="size" defaultValue="auto">
+
+标准尺寸为 `1024x1024`、`1536x1024` 和 `1024x1536`。支持自动尺寸的模型可设置 `auto`。
+
+官方参考明确列出的 GPT Image 2、GPT Image 2.5 Sunburst 和 Flare 及其快照支持 `WIDTHxHEIGHT` 自定义尺寸，如 `1536x864`。宽高必须是 16 的倍数，宽高比介于 1:3 和 3:1。超过 `2560x1440` 属于实验范围，官方参考列出的最大分辨率为 `3840x2160`。实际尺寸还须满足所选模型的像素总量及边长限制。
+
+`256x256`、`512x512`、`1792x1024`、`1024x1792` 是为旧版 SDK 保留的枚举值。
+
+</ApiField>
+
+<ApiField name="stream" type="boolean 或 null" label="流式输出" sourceUrl={officialUrl} sourceText="stream" defaultValue="false">
+
+仅用于支持流式的 GPT Image 生成。设为 `true` 后通过服务器发送事件（SSE）返回中间图像和最终图像。
+
+</ApiField>
+
+<ApiField name="style" type="string 或 null" label="旧版图像风格" sourceUrl={officialUrl} sourceText="style">
+
+`vivid` 和 `natural` 是已退役模型的选项。使用 GPT Image 时在 `prompt` 描述所需风格。
+
+</ApiField>
+
+<ApiField name="svg" type="object 或 null" label="SVG 绘制配置" sourceUrl={officialUrl} sourceText="svg">
+
+设置 `output_format: "svg"` 且有 SVG 模型选择权限时使用。顶层 `model` 负责生成参考图，`svg.model` 负责绘制最终 SVG。SVG 只生成一张图，且不支持流式输出、中间图像、提示词重写和输出压缩。
+
+<div className="ark-api-fields">
+
+<ApiField name="model" type="string" label="SVG 绘制模型" sourceUrl={officialUrl} sourceText="model" required>
+
+启用 SVG 模型选择时必填。值不能为空。
+
+</ApiField>
+
+<ApiField name="reasoning" type="object 或 null" label="SVG 绘制推理配置" sourceUrl={officialUrl} sourceText="reasoning">
+
+控制 SVG 绘制，其配置独立于顶层 `complexity`。
+
+<div className="ark-api-fields">
+
+<ApiField name="effort" type="string 或 null" label="推理强度" sourceUrl={officialUrl} sourceText="effort">
+
+接口列出 `none`、`minimal`、`low`、`medium`、`high`、`xhigh` 和 `max`。可用取值取决于绘制模型，省略时使用该模型的默认值。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="user" type="string" label="旧版终端用户标识" sourceUrl={officialUrl} sourceText="user">
+
+已弃用。新请求使用 `safety_identifier`。
+
+</ApiField>
+
+</div>
+
+## 响应参数
+
+### JSON 响应
+
+<div className="ark-api-fields">
+
+<ApiField name="created" type="integer" label="创建时间" sourceUrl={officialUrl} sourceText="created">
+
+Unix 时间戳，单位为秒。
+
+</ApiField>
+
+<ApiField name="background" type="string" label="实际使用的背景" sourceUrl={officialUrl} sourceText="background">
+
+可能为 `transparent` 或 `opaque`。
+
+</ApiField>
+
+<ApiField name="data" type="array" label="生成结果" sourceUrl={officialUrl} sourceText="data">
+
+包含生成的图像，每个元素对应一张图。
+
+<div className="ark-api-fields">
+
+<ApiField name="b64_json" type="string" label="Base64 图像数据" sourceUrl={officialUrl} sourceText="b64_json">
+
+GPT Image 通过此字段返回图像内容。解码为字节后按 `output_format` 对应的扩展名保存。
+
+</ApiField>
+
+<ApiField name="revised_prompt" type="string" label="改写后的提示词" sourceUrl={officialUrl} sourceText="revised_prompt">
+
+仅支持提示词改写的旧模型可能返回。GPT Image 不返回此字段。
+
+</ApiField>
+
+<ApiField name="url" type="string" label="图像地址" sourceUrl={officialUrl} sourceText="url">
+
+仅在支持 `response_format: "url"` 的旧模型上返回。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="output_format" type="string" label="实际输出格式" sourceUrl={officialUrl} sourceText="output_format">
+
+可能为 `png`、`webp`、`jpeg`、`gif` 或 `svg`。
+
+</ApiField>
+
+<ApiField name="quality" type="string" label="实际渲染质量" sourceUrl={officialUrl} sourceText="quality">
+
+可能为 `low`、`medium`、`high`、`xhigh` 或 `max`。
+
+</ApiField>
+
+<ApiField name="safety_identifier" type="string 或 null" label="生效的终端用户标识" sourceUrl={officialUrl} sourceText="safety_identifier">
+
+返回本次使用的 `safety_identifier`，或在它为空时回退使用的 `user`。
+
+</ApiField>
+
+<ApiField name="size" type="string" label="生成尺寸" sourceUrl={officialUrl} sourceText="size">
+
+格式为 `WIDTHxHEIGHT`，如 `1024x1024`。
+
+</ApiField>
+
+<ApiField name="svg_usage" type="object" label="SVG 绘制用量" sourceUrl={officialUrl} sourceText="svg_usage">
+
+记录 SVG 绘制模型的用量，独立于参考图渲染用量。
+
+<div className="ark-api-fields">
+
+<ApiField name="model" type="string" label="绘制模型" sourceUrl={officialUrl} sourceText="model">
+
+生成 SVG 文件使用的模型。
+
+</ApiField>
+
+<ApiField name="input_tokens" type="integer" label="输入令牌数" sourceUrl={officialUrl} sourceText="input_tokens">
+
+SVG 绘制模型接收的令牌数。
+
+</ApiField>
+
+<ApiField name="output_tokens" type="integer" label="输出令牌数" sourceUrl={officialUrl} sourceText="output_tokens">
+
+SVG 绘制模型生成的令牌数。
+
+</ApiField>
+
+<ApiField name="reasoning_tokens" type="integer" label="推理令牌数" sourceUrl={officialUrl} sourceText="reasoning_tokens">
+
+SVG 绘制使用的推理令牌数。
+
+</ApiField>
+
+<ApiField name="total_tokens" type="integer" label="总令牌数" sourceUrl={officialUrl} sourceText="total_tokens">
+
+SVG 绘制模型消耗的总令牌数。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="usage" type="object" label="图像生成用量" sourceUrl={officialUrl} sourceText="usage">
+
+GPT Image 的输入、输出及合计令牌数。
+
+<div className="ark-api-fields">
+
+<ApiField name="input_tokens" type="integer" label="输入令牌数" sourceUrl={officialUrl} sourceText="input_tokens">
+
+图像及文本输入使用的令牌数。
+
+</ApiField>
+
+<ApiField name="input_tokens_details" type="object" label="输入令牌明细" sourceUrl={officialUrl} sourceText="input_tokens_details">
+
+按图像和文本拆分输入令牌。
+
+<div className="ark-api-fields">
+
+<ApiField name="image_tokens" type="integer" label="图像令牌数" sourceUrl={officialUrl} sourceText="image_tokens">
+
+输入中的图像令牌数。
+
+</ApiField>
+
+<ApiField name="text_tokens" type="integer" label="文本令牌数" sourceUrl={officialUrl} sourceText="text_tokens">
+
+输入中的文本令牌数。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="output_tokens" type="integer" label="输出令牌数" sourceUrl={officialUrl} sourceText="output_tokens">
+
+模型生成的输出令牌数。
+
+</ApiField>
+
+<ApiField name="output_tokens_details" type="object" label="输出令牌明细" sourceUrl={officialUrl} sourceText="output_tokens_details">
+
+返回时按图像和文本拆分输出令牌。
+
+<div className="ark-api-fields">
+
+<ApiField name="image_tokens" type="integer" label="图像令牌数" sourceUrl={officialUrl} sourceText="image_tokens">
+
+输出中的图像令牌数。
+
+</ApiField>
+
+<ApiField name="text_tokens" type="integer" label="文本令牌数" sourceUrl={officialUrl} sourceText="text_tokens">
+
+输出中的文本令牌数。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="total_tokens" type="integer" label="总令牌数" sourceUrl={officialUrl} sourceText="total_tokens">
+
+输入与输出令牌用量之和。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+</div>
+
+### 流式事件
+
+当 `stream` 为 `true` 时，按 SSE 的 `event` 类型解析 `data` 中的 JSON。两个事件都包含 Base64 图像数据和 `created_at`、`background`、`output_format`、`quality`、`size` 等字段。[OpenAI 流式事件参考](https://developers.openai.com/api/reference/resources/images/generation-streaming-events)
+
+| 事件 | 用途 |
+| --- | --- |
+| `image_generation.partial_image` | 返回可用于预览的图像。`partial_image_index` 从 0 开始。 |
+| `image_generation.completed` | 返回最终图像与 `usage` 用量。 |
+
+</div>
+<aside className="ark-api-examples" aria-label="接口示例">
+
+## 输入示例
+
+GIF 和 SVG 示例适用于已获得对应能力的项目。SVG 模型选择已启用时，还需提供 `svg.model`。
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```sh title="生成图像"
+curl --fail-with-body --silent --show-error "${base_url}/v1/images/generations" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "gpt-image-2.6-flare",
+    "prompt": "A cute baby sea otter",
+    "n": 1,
+    "size": "1024x1024"
+  }'
+```
+
+```sh title="流式生成"
+curl --fail-with-body --silent --show-error --no-buffer "${base_url}/v1/images/generations" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "gpt-image-2.6-flare",
+    "prompt": "A cute baby sea otter",
+    "n": 1,
+    "size": "1024x1024",
+    "stream": true,
+    "partial_images": 1
+  }'
+```
+
+```sh title="透明背景"
+curl --fail-with-body --silent --show-error "${base_url}/v1/images/generations" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "gpt-image-2.5-flare",
+    "prompt": "画一盏蓝色台灯，采用简洁的扁平插画风格，台灯之外保留透明背景。",
+    "n": 1,
+    "size": "1024x1024",
+    "background": "transparent",
+    "output_format": "png"
+  }'
+```
+
+```sh title="动画 GIF"
+curl --fail-with-body --silent --show-error "${base_url}/v1/images/generations" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "gpt-image-2.6-flare",
+    "prompt": "制作一个无缝循环的动画，一只蓝色纸飞机沿圆形轨迹飞行。",
+    "n": 1,
+    "size": "auto",
+    "output_format": "gif",
+    "frame_count": 9,
+    "frame_duration_ms": 200
+  }'
+```
+
+```sh title="SVG 矢量图"
+curl --fail-with-body --silent --show-error "${base_url}/v1/images/generations" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H 'Content-Type: application/json' \
+  --data-raw '{
+    "model": "gpt-image-2.6-flare",
+    "prompt": "绘制一个由折线屋顶和方形窗户组成的单色房屋图标，轮廓简洁。",
+    "n": 1,
+    "size": "1024x1024",
+    "output_format": "svg"
+  }'
+```
+
+</CodeTabs>
+</div>
+
+## 输出示例
+
+`b64_json` 中的 `...` 代表示例省略的 Base64 数据。
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```json title="JSON 响应"
+{
+  "created": 1794873600,
+  "background": "opaque",
+  "data": [
+    {
+      "b64_json": "..."
+    }
+  ],
+  "output_format": "png",
+  "quality": "medium",
+  "size": "1024x1024",
+  "usage": {
+    "input_tokens": 14,
+    "input_tokens_details": {
+      "image_tokens": 0,
+      "text_tokens": 14
+    },
+    "output_tokens": 144,
+    "total_tokens": 158,
+    "output_tokens_details": {
+      "image_tokens": 144,
+      "text_tokens": 0
+    }
+  }
+}
+```
+
+```text title="SSE 事件"
+event: image_generation.partial_image
+data: {"type":"image_generation.partial_image","created_at":1794873600,"partial_image_index":0,"background":"opaque","output_format":"png","quality":"medium","size":"1024x1024","b64_json":"..."}
+
+event: image_generation.completed
+data: {"type":"image_generation.completed","created_at":1794873602,"background":"opaque","output_format":"png","quality":"medium","size":"1024x1024","b64_json":"...","usage":{"input_tokens":14,"input_tokens_details":{"image_tokens":0,"text_tokens":14},"output_tokens":144,"total_tokens":158}}
+```
+
+</CodeTabs>
+</div>
+
+</aside>
+</div>
+</div>

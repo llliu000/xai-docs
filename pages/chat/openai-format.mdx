@@ -1,0 +1,1270 @@
+---
+title: OpenAI格式
+description: 使用 OpenAI Responses API 创建文本、结构化 JSON 和流式响应。
+fullWidth: true
+centered: false
+---
+
+import { ApiField } from "../doubao-video/ApiField";
+
+export const officialUrl = "https://developers.openai.com/api/reference/resources/responses/methods/create?translationFallback=zh-Hans";
+export const authUrl = "https://developers.openai.com/api/reference/overview#authentication";
+
+<p className="ark-api-endpoint">
+  <strong>POST</strong>
+  <code apiPath="/v1/responses" defaultBaseUrl="https://api.openai.com" />
+</p>
+
+提交文本、图片或文件，让模型生成文本或结构化 JSON。接口支持多轮对话、函数调用、内置工具和流式输出。[OpenAI 官方接口参考](https://developers.openai.com/api/reference/resources/responses/methods/create?translationFallback=zh-Hans)
+
+<div className="ark-api-reference">
+<div className="ark-api-columns">
+<div>
+
+## 鉴权
+
+本接口支持以下鉴权方式，详情见 [OpenAI 官方鉴权说明](https://developers.openai.com/api/reference/overview#authentication)。
+
+- API Key 鉴权。前往 [OpenAI API Key 管理](https://platform.openai.com/api-keys) 获取 API Key。
+
+---
+
+## 请求参数
+
+### 请求头
+
+<div className="ark-api-fields">
+
+<ApiField name="Authorization" type="string" label="API Key" sourceUrl={authUrl} sourceText="Authorization" required>
+
+值为 `Bearer $OPENAI_API_KEY`。
+
+</ApiField>
+
+<ApiField name="Content-Type" type="string" label="请求类型" sourceUrl={officialUrl} sourceText="Content-Type" required>
+
+请求体使用 `application/json`。
+
+</ApiField>
+
+<ApiField name="OpenAI-Organization" type="string" label="组织 ID" sourceUrl={authUrl} sourceText="OpenAI-Organization">
+
+需要明确指定计费组织时传入。
+
+</ApiField>
+
+<ApiField name="OpenAI-Project" type="string" label="项目 ID" sourceUrl={authUrl} sourceText="OpenAI-Project">
+
+需要明确指定项目时传入。
+
+</ApiField>
+
+</div>
+
+### Body 参数
+
+<div className="ark-api-fields">
+
+<ApiField name="model" type="string" label="模型" sourceUrl={officialUrl} sourceText="model">
+
+用于生成响应的模型 ID，例如 `gpt-6.2-astra`。直接提交输入时指定所需模型。 [OpenAI 模型列表](https://developers.openai.com/api/docs/models)
+
+</ApiField>
+
+<ApiField name="input" type="string 或 array" label="输入" sourceUrl={officialUrl} sourceText="input">
+
+字符串等同于一条 `user` 文本消息。数组可传入角色消息、工具调用与结果、已有项引用等。提交客户端函数结果时使用 `function_call_output`，填写该调用的 `call_id` 和 `output`。 [函数调用指南](https://developers.openai.com/api/docs/guides/function-calling)
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="输入项类型" sourceUrl={officialUrl} sourceText="type">
+
+角色消息可使用 `message`。其他输入项用各自的 `type`，例如 `function_call_output` 或 `item_reference`。
+
+</ApiField>
+
+<ApiField name="role" type="string" label="消息角色" sourceUrl={officialUrl} sourceText="role" required="conditional">
+
+支持 `user`、`assistant`、`system`、`developer`。`system` 和 `developer` 的指令优先于 `user`。
+
+</ApiField>
+
+<ApiField name="content" type="string 或 array" label="消息内容" sourceUrl={officialUrl} sourceText="content" required="conditional">
+
+角色消息可包含纯文本或内容块数组。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="内容类型" sourceUrl={officialUrl} sourceText="type">
+
+文本、图像和文件分别使用 `input_text`、`input_image` 和 `input_file`。
+
+</ApiField>
+
+<ApiField name="text" type="string" label="输入文本" sourceUrl={officialUrl} sourceText="text">
+
+`type` 为 `input_text` 时填写。
+
+</ApiField>
+
+<ApiField name="image_url" type="string 或 null" label="图像地址" sourceUrl={officialUrl} sourceText="image_url">
+
+完整图像 URL 或包含 Base64 图像数据的 data URL。
+
+</ApiField>
+
+<ApiField name="file_id" type="string 或 null" label="文件 ID" sourceUrl={officialUrl} sourceText="file_id">
+
+使用已上传的文件作为图片或文件输入时填写。
+
+</ApiField>
+
+<ApiField name="file_url" type="string" label="文件地址" sourceUrl={officialUrl} sourceText="file_url">
+
+`input_file` 可使用完整的文件 URL。
+
+</ApiField>
+
+<ApiField name="file_data" type="string" label="文件数据" sourceUrl={officialUrl} sourceText="file_data">
+
+`input_file` 也可以直接提供编码后的文件数据。
+
+</ApiField>
+
+<ApiField name="filename" type="string" label="文件名" sourceUrl={officialUrl} sourceText="filename">
+
+用于标注直接提供的数据文件，例如 `report.pdf`。
+
+</ApiField>
+
+<ApiField name="detail" type="string" label="输入细节" sourceUrl={officialUrl} sourceText="detail">
+
+图像支持 `auto`、`low`、`high`、`original`。文件支持 `auto`、`low`、`high`。两者均以 `auto` 为默认值。
+
+</ApiField>
+
+<ApiField name="prompt_cache_breakpoint" type="object" label="提示词缓存断点" sourceUrl={officialUrl} sourceText="prompt_cache_breakpoint">
+
+标记可复用前缀的结束位置。`mode` 固定为 `explicit`，`ttl` 支持 `30m` 或 `12h`，省略时继承请求设置。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="phase" type="string 或 null" label="助手消息阶段" sourceUrl={officialUrl} sourceText="phase">
+
+支持 `commentary`、`final_answer`。当模型支持此字段时，回传历史助手消息应保留原值。
+
+</ApiField>
+
+<ApiField name="status" type="string" label="历史消息状态" sourceUrl={officialUrl} sourceText="status">
+
+回传相应的历史消息对象时可包含 `in_progress`、`completed` 或 `incomplete`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="instructions" type="string 或 null" label="系统指令" sourceUrl={officialUrl} sourceText="instructions">
+
+将系统或开发者指令放入当前上下文。使用 `previous_response_id` 时，上一轮的 `instructions` 不会自动沿用。
+
+</ApiField>
+
+<ApiField name="access_programs" type="object" label="领域访问配置" sourceUrl={officialUrl} sourceText="access_programs">
+
+按组织和项目权限设置领域访问。适用模型和权限条件见官方接口参考。
+
+<div className="ark-api-fields">
+
+<ApiField name="cyber" type="string" label="访问计划" sourceUrl={officialUrl} sourceText="cyber">
+
+请求可指定的值为 `standard`、`daybreak_blue` 或 `daybreak_red`。可用性由模型及组织、项目权限决定。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="background" type="boolean 或 null" label="后台运行" sourceUrl={officialUrl} sourceText="background" defaultValue="false">
+
+启用后可以在后台生成，再按响应 ID 查询状态。 [后台模式指南](https://developers.openai.com/api/docs/guides/background)
+
+</ApiField>
+
+<ApiField name="background_options" type="object" label="后台运行选项" sourceUrl={officialUrl} sourceText="background_options">
+
+设置完成时间窗口和关联标识。
+
+<div className="ark-api-fields">
+
+<ApiField name="completion_window" type="string" label="完成窗口" sourceUrl={officialUrl} sourceText="completion_window" defaultValue="soonest">
+
+支持 `soonest`、`2h` 和 `8h`。两个延长窗口要求后台运行、使用标准处理，且关闭或省略流式输出。
+
+</ApiField>
+
+<ApiField name="continuation_id" type="string" label="关联标识" sourceUrl={officialUrl} sourceText="continuation_id">
+
+调用方提供的不透明标识，用于对相关后台请求安排优先级。此设置不会带入对话历史。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="context_management" type="array 或 null" label="上下文管理" sourceUrl={officialUrl} sourceText="context_management">
+
+自定义上下文压缩。传入数组时至少包含一项。
+
+<div className="ark-api-fields">
+
+<ApiField name="type" type="string" label="管理类型" sourceUrl={officialUrl} sourceText="type" required>
+
+固定为 `compaction`。
+
+</ApiField>
+
+<ApiField name="compact_threshold" type="integer 或 null" label="压缩阈值" sourceUrl={officialUrl} sourceText="compact_threshold">
+
+达到此令牌数时触发压缩，最小值为 `1000`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="conversation" type="string、object 或 null" label="所属对话" sourceUrl={officialUrl} sourceText="conversation">
+
+传入对话 ID 或带 `id` 的对象。对话项会先于本次输入进入上下文。本次输入和输出在响应完成后加入对话。与 `previous_response_id` 互斥。
+
+</ApiField>
+
+<ApiField name="image" type="object" label="图像选项" sourceUrl={officialUrl} sourceText="image">
+
+请求级图像设置。
+
+<div className="ark-api-fields">
+
+<ApiField name="context_compression" type="string" label="图像上下文压缩" sourceUrl={officialUrl} sourceText="context_compression" defaultValue="auto">
+
+`auto` 根据模型、传输方式和输入选择策略，`enabled` 要求支持并启用压缩，`disabled` 关闭压缩。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="include" type="array 或 null" label="附加响应数据" sourceUrl={officialUrl} sourceText="include">
+
+可请求返回以下附加数据。
+
+| 值 | 数据 |
+| --- | --- |
+| `web_search_call.action.sources` | 网页搜索来源 |
+| `web_search_call.results` | 网页搜索结果 |
+| `file_search_call.results` | 文件搜索结果 |
+| `code_interpreter_call.outputs` | 代码解释器输出 |
+| `computer_call_output.output.image_url` | 计算机操作输出的图像 URL |
+| `message.input_image.image_url` | 输入图片的 URL |
+| `message.output_text.logprobs` | 输出文本的对数概率 |
+| `reasoning.encrypted_content` | 可回传到后续无状态请求的加密推理内容 |
+
+</ApiField>
+
+<ApiField name="max_output_tokens" type="integer 或 null" label="最大输出令牌数" sourceUrl={officialUrl} sourceText="max_output_tokens">
+
+包含可见输出和推理令牌。最小值为 `16`。
+
+</ApiField>
+
+<ApiField name="max_tool_calls" type="integer 或 null" label="内置工具调用上限" sourceUrl={officialUrl} sourceText="max_tool_calls">
+
+对单次响应内所有内置工具的调用合计计数。超过上限的尝试会被忽略。
+
+</ApiField>
+
+<ApiField name="metadata" type="object 或 null" label="元数据" sourceUrl={officialUrl} sourceText="metadata">
+
+最多 16 个键值对，用于附加信息和检索。键和值均为字符串，长度上限分别为 64 和 512 字符。
+
+</ApiField>
+
+<ApiField name="moderation" type="object 或 null" label="内容审核设置" sourceUrl={officialUrl} sourceText="moderation">
+
+按需审核本次请求的输入和输出。
+
+<div className="ark-api-fields">
+
+<ApiField name="model" type="string" label="审核模型" sourceUrl={officialUrl} sourceText="model" required>
+
+例如 `omni-moderation-latest`。
+
+</ApiField>
+
+<ApiField name="policy" type="object 或 null" label="审核策略" sourceUrl={officialUrl} sourceText="policy">
+
+可以分别指定 `input.mode` 和 `output.mode`。`score` 返回审核结果，`block` 根据审核结果阻止相应的输入或输出。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="parallel_tool_calls" type="boolean 或 null" label="允许并行调用工具" sourceUrl={officialUrl} sourceText="parallel_tool_calls" defaultValue="true">
+
+控制模型是否可并行发起工具调用。
+
+</ApiField>
+
+<ApiField name="previous_response_id" type="string 或 null" label="上一条响应 ID" sourceUrl={officialUrl} sourceText="previous_response_id">
+
+用上一轮返回的 `id` 延续对话。与 `conversation` 互斥。 [对话状态指南](https://developers.openai.com/api/docs/guides/conversation-state)
+
+</ApiField>
+
+<ApiField name="prompt" type="object 或 null" label="提示词模板" sourceUrl={officialUrl} sourceText="prompt">
+
+引用已保存的提示词模板。
+
+<div className="ark-api-fields">
+
+<ApiField name="id" type="string" label="模板 ID" sourceUrl={officialUrl} sourceText="id" required>
+
+指定要使用的模板。
+
+</ApiField>
+
+<ApiField name="version" type="string 或 null" label="模板版本" sourceUrl={officialUrl} sourceText="version">
+
+可选的模板版本。
+
+</ApiField>
+
+<ApiField name="variables" type="object 或 null" label="模板变量" sourceUrl={officialUrl} sourceText="variables">
+
+以变量名为键，值可为字符串、`input_text`、`input_image` 或 `input_file`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="prompt_cache_key" type="string 或 null" label="提示词缓存键" sourceUrl={officialUrl} sourceText="prompt_cache_key">
+
+用稳定的键归并相似请求，提高缓存命中率。
+
+</ApiField>
+
+<ApiField name="prompt_cache_options" type="object" label="提示词缓存选项" sourceUrl={officialUrl} sourceText="prompt_cache_options">
+
+适用于 GPT-5.6 及更新模型。可为内容块设置显式断点。 [提示词缓存指南](https://developers.openai.com/api/docs/guides/prompt-caching)
+
+<div className="ark-api-fields">
+
+<ApiField name="mode" type="string" label="断点模式" sourceUrl={officialUrl} sourceText="mode" defaultValue="implicit">
+
+`implicit` 自动创建一个隐式断点，并最多写入三个显式断点。`explicit` 关闭隐式断点，并最多写入四个显式断点。
+
+</ApiField>
+
+<ApiField name="ttl" type="string" label="最低缓存时长" sourceUrl={officialUrl} sourceText="ttl" defaultValue="30m">
+
+支持 `30m` 和 `12h`。单个显式断点可覆盖此值。
+
+</ApiField>
+
+<ApiField name="prewarm" type="boolean" label="预热缓存" sourceUrl={officialUrl} sourceText="prewarm" defaultValue="false">
+
+设为 `true` 时准备缓存，不生成输出。
+
+</ApiField>
+
+<ApiField name="comparison_response_id" type="string 或 null" label="诊断比较响应 ID" sourceUrl={officialUrl} sourceText="comparison_response_id">
+
+指定用于诊断缓存复用情况的历史响应。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="prompt_cache_retention" type="string 或 null" label="旧版缓存保留策略" sourceUrl={officialUrl} sourceText="prompt_cache_retention">
+
+已弃用。支持 `in_memory` 和 `24h`，可用值取决于模型。新请求可使用 `prompt_cache_options.ttl`。
+
+</ApiField>
+
+<ApiField name="reasoning" type="object 或 null" label="推理配置" sourceUrl={officialUrl} sourceText="reasoning">
+
+可用选项取决于模型。 [推理指南](https://developers.openai.com/api/docs/guides/reasoning)
+
+<div className="ark-api-fields">
+
+<ApiField name="context" type="string 或 null" label="历史推理上下文" sourceUrl={officialUrl} sourceText="context">
+
+支持 `auto`、`current_turn` 和 `all_turns`，用于控制后续轮次使用哪些推理项。
+
+</ApiField>
+
+<ApiField name="effort" type="string 或 null" label="推理强度" sourceUrl={officialUrl} sourceText="effort">
+
+接口列出 `none`、`minimal`、`low`、`medium`、`high`、`xhigh`、`max`。具体模型支持的取值和默认行为见模型文档。
+
+</ApiField>
+
+<ApiField name="mode" type="string" label="推理执行模式" sourceUrl={officialUrl} sourceText="mode">
+
+例如 `standard` 或 `pro`，取决于模型支持。
+
+</ApiField>
+
+<ApiField name="summary" type="string 或 null" label="推理摘要" sourceUrl={officialUrl} sourceText="summary">
+
+可选 `auto`、`concise`、`detailed`，按模型支持使用。
+
+</ApiField>
+
+<ApiField name="generate_summary" type="string 或 null" label="旧版推理摘要" sourceUrl={officialUrl} sourceText="generate_summary">
+
+已弃用，使用 `summary`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="safety_identifier" type="string 或 null" label="终端用户标识" sourceUrl={officialUrl} sourceText="safety_identifier">
+
+用于区分应用的终端用户，最长 128 字符。可使用哈希值避免发送明文个人信息。
+
+</ApiField>
+
+<ApiField name="service_tier" type="string 或 null" label="服务层级" sourceUrl={officialUrl} sourceText="service_tier" defaultValue="auto">
+
+接口列出 `auto`、`default`、`flex`、`scale`、`priority`、`fast`、`ultrafast`。可用性取决于模型和项目。响应返回实际生效的处理层级。
+
+</ApiField>
+
+<ApiField name="store" type="boolean 或 null" label="保存响应" sourceUrl={officialUrl} sourceText="store" defaultValue="true">
+
+是否保存生成的响应，以便稍后通过 API 读取。保存期限受数据保留设置和例外条款影响。
+
+</ApiField>
+
+<ApiField name="stream" type="boolean 或 null" label="流式输出" sourceUrl={officialUrl} sourceText="stream" defaultValue="false">
+
+设为 `true` 时使用服务器发送事件（SSE）逐步返回响应。 [流式事件参考](https://developers.openai.com/api/reference/resources/responses/streaming-events)
+
+</ApiField>
+
+<ApiField name="stream_options" type="object 或 null" label="流式选项" sourceUrl={officialUrl} sourceText="stream_options">
+
+仅在 `stream: true` 时设置。
+
+<div className="ark-api-fields">
+
+<ApiField name="include_obfuscation" type="boolean" label="包含流式填充" sourceUrl={officialUrl} sourceText="include_obfuscation" defaultValue="true">
+
+控制流式增量事件是否附带 `obfuscation` 填充数据。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="temperature" type="number 或 null" label="采样温度" sourceUrl={officialUrl} sourceText="temperature" defaultValue="1">
+
+范围为 `0`–`2`。建议同一请求只调整此字段和 `top_p` 中的一个。
+
+</ApiField>
+
+<ApiField name="text" type="object" label="文本输出配置" sourceUrl={officialUrl} sourceText="text">
+
+支持纯文本和结构化 JSON。 [结构化输出指南](https://developers.openai.com/api/docs/guides/structured-outputs)
+
+<div className="ark-api-fields">
+
+<ApiField name="format" type="object" label="输出格式" sourceUrl={officialUrl} sourceText="format" defaultValue="text">
+
+`type` 支持 `text`、`json_schema` 和 `json_object`。使用 `json_schema` 时提供 `name` 和 `schema`，可设 `strict` 开启严格匹配，可用 `description` 描述结构。使用 `json_object` 时在提示词中明确要求输出 JSON。
+
+</ApiField>
+
+<ApiField name="verbosity" type="string 或 null" label="详细程度" sourceUrl={officialUrl} sourceText="verbosity" defaultValue="medium">
+
+支持 `low`、`medium` 和 `high`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="tool_choice" type="string 或 object" label="工具选择" sourceUrl={officialUrl} sourceText="tool_choice">
+
+可传 `auto`、`none` 或 `required`。对象可指定工具类型，或用 `{"type":"function","name":"get_weather"}` 选定函数。`allowed_tools` 对象通过 `tools` 和 `mode` 限制可选工具。
+
+</ApiField>
+
+<ApiField name="tools" type="array" label="可调用工具" sourceUrl={officialUrl} sourceText="tools">
+
+支持客户端函数、内置工具和 MCP 工具。各类型使用自己定义的配置字段。 [OpenAI 工具指南](https://developers.openai.com/api/docs/guides/tools)
+
+<div className="ark-api-fields">
+
+<ApiField name="function" type="object" label="客户端函数" sourceUrl={officialUrl} sourceText="function">
+
+`type` 为 `function`，使用 `name`、`description`、`parameters`（JSON Schema）及 `strict` 描述函数和参数校验。
+
+</ApiField>
+
+<ApiField name="file_search" type="object" label="文件搜索" sourceUrl={officialUrl} sourceText="file_search">
+
+`type` 为 `file_search`，通过 `vector_store_ids` 指定向量存储，支持 `filters`、`max_num_results` 和 `ranking_options`。
+
+</ApiField>
+
+<ApiField name="web_search" type="object" label="网页搜索" sourceUrl={officialUrl} sourceText="web_search">
+
+`type` 为 `web_search` 时可设置搜索范围、上下文大小和大致用户位置。官方参考也列有 `web_search_preview` 类型。
+
+</ApiField>
+
+<ApiField name="mcp" type="object" label="MCP 工具" sourceUrl={officialUrl} sourceText="mcp">
+
+`type` 为 `mcp`，使用 `server_label` 标识连接，可按实际配置指定服务器或连接器。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="top_logprobs" type="integer 或 null" label="候选令牌对数概率数" sourceUrl={officialUrl} sourceText="top_logprobs">
+
+指定每个位置最多返回的候选令牌数，范围为 `0`–`20`。可通过 `include` 请求返回对数概率。
+
+</ApiField>
+
+<ApiField name="top_p" type="number 或 null" label="核采样概率" sourceUrl={officialUrl} sourceText="top_p" defaultValue="1">
+
+范围为 `0`–`1`。值越低，考虑的累计概率范围越小。
+
+</ApiField>
+
+<ApiField name="truncation" type="string 或 null" label="上下文截断" sourceUrl={officialUrl} sourceText="truncation" defaultValue="disabled">
+
+`auto` 在超限时从对话开头移除输入项。`disabled` 在超出模型上下文时返回 HTTP 400。
+
+</ApiField>
+
+<ApiField name="user" type="string 或 null" label="旧版用户标识" sourceUrl={officialUrl} sourceText="user">
+
+已弃用。用户识别使用 `safety_identifier`，缓存归并使用 `prompt_cache_key`。
+
+</ApiField>
+
+</div>
+
+## 响应参数
+
+普通请求返回 JSON 响应对象。启用流式输出时，服务端按事件发送响应状态和增量内容。[OpenAI 流式事件参考](https://developers.openai.com/api/reference/resources/responses/streaming-events)
+
+<div className="ark-api-fields">
+
+<ApiField name="id" type="string" label="响应 ID" sourceUrl={officialUrl} sourceText="id">
+
+本次响应的唯一标识，后续可用于查询响应或延续对话。
+
+</ApiField>
+
+<ApiField name="object" type="string" label="对象类型" sourceUrl={officialUrl} sourceText="object">
+
+固定为 `response`。
+
+</ApiField>
+
+<ApiField name="status" type="string" label="生成状态" sourceUrl={officialUrl} sourceText="status">
+
+可能为 `queued`、`in_progress`、`completed`、`failed`、`cancelled` 或 `incomplete`。
+
+</ApiField>
+
+<ApiField name="created_at" type="number" label="创建时间" sourceUrl={officialUrl} sourceText="created_at">
+
+响应创建时的 Unix 时间戳，单位为秒。
+
+</ApiField>
+
+<ApiField name="completed_at" type="number 或 null" label="完成时间" sourceUrl={officialUrl} sourceText="completed_at">
+
+响应完成时的 Unix 时间戳，单位为秒。
+
+</ApiField>
+
+<ApiField name="model" type="string" label="模型" sourceUrl={officialUrl} sourceText="model">
+
+用于本次响应的模型标识。
+
+</ApiField>
+
+<ApiField name="output" type="array" label="输出项" sourceUrl={officialUrl} sourceText="output">
+
+按类型返回助手消息、推理项、函数调用及其他工具结果。输出顺序取决于本次请求，读取文本时遍历消息的内容块。
+
+<div className="ark-api-fields">
+
+<ApiField name="message" type="object" label="助手消息" sourceUrl={officialUrl} sourceText="message">
+
+`type` 为 `message`。包含 `id`、`role: "assistant"`、`status` 和 `content`，部分模型也会返回 `phase`。
+
+<div className="ark-api-fields">
+
+<ApiField name="output_text" type="object" label="文本块" sourceUrl={officialUrl} sourceText="output_text">
+
+在 `content` 中以 `type: "output_text"` 标识。`text` 是输出文本，`annotations` 可包含引用，`logprobs` 可包含令牌概率。
+
+</ApiField>
+
+<ApiField name="refusal" type="object" label="拒绝块" sourceUrl={officialUrl} sourceText="refusal">
+
+在 `content` 中以 `type: "refusal"` 标识，`refusal` 保存拒绝说明。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="function_call" type="object" label="函数调用" sourceUrl={officialUrl} sourceText="function_call">
+
+包含 `name`、`call_id` 和 JSON 字符串 `arguments`。使用相同的 `call_id` 回传 `function_call_output`。
+
+</ApiField>
+
+<ApiField name="reasoning" type="object" label="推理项" sourceUrl={officialUrl} sourceText="reasoning">
+
+可包含 `summary` 和按需返回的 `encrypted_content`。回传历史推理项时保留服务端返回的结构。
+
+</ApiField>
+
+<ApiField name="web_search_call" type="object" label="网页搜索调用" sourceUrl={officialUrl} sourceText="web_search_call">
+
+包含调用 ID、状态和搜索动作。可用 `include` 请求附加来源。
+
+</ApiField>
+
+<ApiField name="file_search_call" type="object" label="文件搜索调用" sourceUrl={officialUrl} sourceText="file_search_call">
+
+包含调用 ID、状态和查询词。可用 `include` 请求附加 `results`。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="output_text" type="string 或 null" label="SDK 文本汇总" sourceUrl={officialUrl} sourceText="output_text">
+
+Python 和 JavaScript SDK 提供的便捷属性。直接使用 HTTP 时从 `output` 内的消息内容读取文本。
+
+</ApiField>
+
+<ApiField name="error" type="object 或 null" label="生成错误" sourceUrl={officialUrl} sourceText="error">
+
+响应生成失败时可查看 `code` 和 `message`。特定错误会携带附加结构化详情。
+
+<div className="ark-api-fields">
+
+<ApiField name="code" type="string" label="错误代码" sourceUrl={officialUrl} sourceText="code">
+
+如 `server_error`、`rate_limit_exceeded` 或 `invalid_prompt`。
+
+</ApiField>
+
+<ApiField name="message" type="string" label="错误信息" sourceUrl={officialUrl} sourceText="message">
+
+适合阅读的失败说明。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="incomplete_details" type="object 或 null" label="未完成详情" sourceUrl={officialUrl} sourceText="incomplete_details">
+
+`reason` 可能为 `max_output_tokens`、`max_messages`、`content_filter` 或 `steered`。
+
+</ApiField>
+
+<ApiField name="usage" type="object 或 null" label="模型令牌用量" sourceUrl={officialUrl} sourceText="usage">
+
+本次模型生成的输入、输出和总令牌数。部分中间响应尚无用量。
+
+<div className="ark-api-fields">
+
+<ApiField name="input_tokens" type="integer" label="输入令牌数" sourceUrl={officialUrl} sourceText="input_tokens">
+
+用于本次生成的输入令牌数。
+
+</ApiField>
+
+<ApiField name="input_tokens_details" type="object" label="输入令牌明细" sourceUrl={officialUrl} sourceText="input_tokens_details">
+
+`cached_tokens` 为缓存命中数，`cache_write_tokens` 为写入缓存数。若返回 `cache_write_tokens_details`，可读取 `ttl_30m_tokens` 和 `ttl_12h_tokens`。
+
+</ApiField>
+
+<ApiField name="output_tokens" type="integer" label="输出令牌数" sourceUrl={officialUrl} sourceText="output_tokens">
+
+模型生成的输出令牌数。
+
+</ApiField>
+
+<ApiField name="output_tokens_details" type="object" label="输出令牌明细" sourceUrl={officialUrl} sourceText="output_tokens_details">
+
+`reasoning_tokens` 为输出中用于推理的令牌数。
+
+</ApiField>
+
+<ApiField name="total_tokens" type="integer" label="总令牌数" sourceUrl={officialUrl} sourceText="total_tokens">
+
+本次模型生成的输入与输出令牌数之和。
+
+</ApiField>
+
+</div>
+
+</ApiField>
+
+<ApiField name="tool_usage" type="object" label="内置工具用量" sourceUrl={officialUrl} sourceText="tool_usage">
+
+独立于模型令牌 `usage`。`web_search.num_requests` 为计费搜索次数，`image_gen` 提供图像生成令牌合计和分类统计。
+
+</ApiField>
+
+<ApiField name="access_programs" type="object 或 null" label="生效的领域访问配置" sourceUrl={officialUrl} sourceText="access_programs">
+
+`cyber` 表示本次响应使用的领域访问计划。
+
+</ApiField>
+
+<ApiField name="background" type="boolean 或 null" label="后台运行" sourceUrl={officialUrl} sourceText="background">
+
+本次响应是否在后台处理。
+
+</ApiField>
+
+<ApiField name="conversation" type="object 或 null" label="所属对话" sourceUrl={officialUrl} sourceText="conversation">
+
+`id` 为响应关联的对话 ID。
+
+</ApiField>
+
+<ApiField name="image" type="object" label="生效的图像选项" sourceUrl={officialUrl} sourceText="image">
+
+`context_compression` 表示本次图像上下文是否压缩。
+
+</ApiField>
+
+<ApiField name="input_transformations" type="array" label="输入转换记录" sourceUrl={officialUrl} sourceText="input_transformations">
+
+按输入顺序列出未传给模型的推理项。每项包含 `id`、`action`、`reason` 和 `type`。
+
+</ApiField>
+
+<ApiField name="instructions" type="string、array 或 null" label="本次指令" sourceUrl={officialUrl} sourceText="instructions">
+
+本次请求使用的系统或开发者指令。
+
+</ApiField>
+
+<ApiField name="max_output_tokens" type="integer 或 null" label="最大输出令牌数" sourceUrl={officialUrl} sourceText="max_output_tokens">
+
+本次响应的输出上限，包含推理令牌。
+
+</ApiField>
+
+<ApiField name="max_tool_calls" type="integer 或 null" label="内置工具调用上限" sourceUrl={officialUrl} sourceText="max_tool_calls">
+
+适用于本次响应的内置工具调用总上限。
+
+</ApiField>
+
+<ApiField name="metadata" type="object 或 null" label="元数据" sourceUrl={officialUrl} sourceText="metadata">
+
+请求附带的键值对。
+
+</ApiField>
+
+<ApiField name="moderation" type="object 或 null" label="审核结果" sourceUrl={officialUrl} sourceText="moderation">
+
+请求启用审核时，`input` 和 `output` 分别返回对应的审核结果或错误。
+
+</ApiField>
+
+<ApiField name="parallel_tool_calls" type="boolean" label="并行工具调用" sourceUrl={officialUrl} sourceText="parallel_tool_calls">
+
+是否允许模型并行调用工具。
+
+</ApiField>
+
+<ApiField name="previous_response_id" type="string 或 null" label="上一条响应 ID" sourceUrl={officialUrl} sourceText="previous_response_id">
+
+连续多轮请求关联的上一条响应标识。
+
+</ApiField>
+
+<ApiField name="prompt" type="object 或 null" label="提示词模板" sourceUrl={officialUrl} sourceText="prompt">
+
+响应使用的模板及其 `id`、`version` 和 `variables`。
+
+</ApiField>
+
+<ApiField name="prompt_cache_diagnostics" type="object" label="提示词缓存诊断" sourceUrl={officialUrl} sourceText="prompt_cache_diagnostics">
+
+`type` 表示缓存命中、未命中、比较响应不存在或诊断不可用。未命中时可查看 `reason`、`cache_missed_tokens` 和可能返回的 `comparison_reusable_tokens`。
+
+</ApiField>
+
+<ApiField name="prompt_cache_key" type="string 或 null" label="提示词缓存键" sourceUrl={officialUrl} sourceText="prompt_cache_key">
+
+用于归并相似请求的缓存键。
+
+</ApiField>
+
+<ApiField name="prompt_cache_options" type="object" label="生效的提示词缓存选项" sourceUrl={officialUrl} sourceText="prompt_cache_options">
+
+包括断点模式 `mode`、最低有效期 `ttl` 以及可能的 `comparison_response_id`。
+
+</ApiField>
+
+<ApiField name="prompt_cache_retention" type="string 或 null" label="旧版缓存保留策略" sourceUrl={officialUrl} sourceText="prompt_cache_retention">
+
+响应记录的旧版缓存保留配置。
+
+</ApiField>
+
+<ApiField name="reasoning" type="object 或 null" label="推理配置" sourceUrl={officialUrl} sourceText="reasoning">
+
+本次应用的推理强度、摘要、上下文或执行模式等选项。
+
+</ApiField>
+
+<ApiField name="safety_identifier" type="string 或 null" label="终端用户标识" sourceUrl={officialUrl} sourceText="safety_identifier">
+
+本次请求传入的终端用户标识。
+
+</ApiField>
+
+<ApiField name="service_tier" type="string 或 null" label="实际服务层级" sourceUrl={officialUrl} sourceText="service_tier">
+
+响应实际使用的处理层级，可能与请求指定的值不同。
+
+</ApiField>
+
+<ApiField name="temperature" type="number 或 null" label="采样温度" sourceUrl={officialUrl} sourceText="temperature">
+
+本次响应使用的采样温度。
+
+</ApiField>
+
+<ApiField name="text" type="object" label="文本输出配置" sourceUrl={officialUrl} sourceText="text">
+
+包括输出格式 `format` 和可选的 `verbosity`。
+
+</ApiField>
+
+<ApiField name="tool_choice" type="string 或 object" label="工具选择" sourceUrl={officialUrl} sourceText="tool_choice">
+
+本次生成使用的工具选择设置。
+
+</ApiField>
+
+<ApiField name="tools" type="array" label="工具定义" sourceUrl={officialUrl} sourceText="tools">
+
+本次生成可用的工具列表。
+
+</ApiField>
+
+<ApiField name="top_logprobs" type="integer 或 null" label="候选令牌对数概率数" sourceUrl={officialUrl} sourceText="top_logprobs">
+
+本次为每个位置配置的候选令牌数。
+
+</ApiField>
+
+<ApiField name="top_p" type="number 或 null" label="核采样概率" sourceUrl={officialUrl} sourceText="top_p">
+
+本次响应的核采样设置。
+
+</ApiField>
+
+<ApiField name="truncation" type="string 或 null" label="截断策略" sourceUrl={officialUrl} sourceText="truncation">
+
+应用到本次输入的上下文截断策略。
+
+</ApiField>
+
+<ApiField name="user" type="string 或 null" label="旧版用户标识" sourceUrl={officialUrl} sourceText="user">
+
+响应中的旧版终端用户标识。
+
+</ApiField>
+
+</div>
+
+</div>
+<aside className="ark-api-examples" aria-label="接口示例">
+
+## 输入示例
+
+将 `vs_example` 替换为已有的向量存储 ID。回传函数结果时，从上一轮响应获取真实的 `resp_…` 和 `call_…`。
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```sh title="文本输入"
+curl -sS "${base_url}/v1/responses" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  --data-raw '{
+    "model": "gpt-6.2-astra",
+    "input": "用一句话解释彩虹形成的原因。"
+  }'
+```
+
+```sh title="图片输入"
+curl -sS "${base_url}/v1/responses" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  --data-raw '{
+    "model": "gpt-6.2-astra",
+    "input": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "input_text",
+            "text": "请描述画面中的步道和周围的环境。"
+          },
+          {
+            "type": "input_image",
+            "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg",
+            "detail": "auto"
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+```sh title="文件输入"
+curl -sS "${base_url}/v1/responses" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  --data-raw '{
+    "model": "gpt-6.2-astra",
+    "input": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "input_text",
+            "text": "用三点概括这份文件。"
+          },
+          {
+            "type": "input_file",
+            "file_url": "https://www.berkshirehathaway.com/letters/2024ltr.pdf",
+            "detail": "auto"
+          }
+        ]
+      }
+    ]
+  }'
+```
+
+```sh title="函数调用"
+curl -sS "${base_url}/v1/responses" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  --data-raw '{
+    "model": "gpt-6.2-astra",
+    "input": "上海今天的天气怎么样？",
+    "tools": [
+      {
+        "type": "function",
+        "name": "get_weather",
+        "description": "查询指定城市的天气。",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string",
+              "description": "城市名称"
+            }
+          },
+          "required": [
+            "city"
+          ],
+          "additionalProperties": false
+        },
+        "strict": true
+      }
+    ],
+    "tool_choice": "auto"
+  }'
+```
+
+```sh title="回传函数结果"
+curl -sS "${base_url}/v1/responses" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  --data-raw '{
+    "model": "gpt-6.2-astra",
+    "previous_response_id": "resp_example_tool",
+    "input": [
+      {
+        "type": "function_call_output",
+        "call_id": "call_example_weather",
+        "output": "{\"city\":\"上海\",\"temperature_c\":24,\"condition\":\"多云\"}"
+      }
+    ],
+    "tools": [
+      {
+        "type": "function",
+        "name": "get_weather",
+        "description": "查询指定城市的天气。",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string",
+              "description": "城市名称"
+            }
+          },
+          "required": [
+            "city"
+          ],
+          "additionalProperties": false
+        },
+        "strict": true
+      }
+    ]
+  }'
+```
+
+```sh title="文件搜索"
+curl -sS "${base_url}/v1/responses" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  --data-raw '{
+    "model": "gpt-6.2-astra",
+    "input": "参考知识库，概括文档中的退款流程。",
+    "tools": [
+      {
+        "type": "file_search",
+        "vector_store_ids": [
+          "vs_example"
+        ],
+        "max_num_results": 5
+      }
+    ],
+    "include": [
+      "file_search_call.results"
+    ]
+  }'
+```
+
+```sh title="网页搜索"
+curl -sS "${base_url}/v1/responses" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  --data-raw '{
+    "model": "gpt-6.2-astra",
+    "input": "查找上海博物馆官网发布的参观须知，列出预约要求。",
+    "tools": [
+      {
+        "type": "web_search"
+      }
+    ],
+    "include": [
+      "web_search_call.action.sources"
+    ]
+  }'
+```
+
+```sh title="推理"
+curl -sS "${base_url}/v1/responses" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  --data-raw '{
+    "model": "gpt-6.2-astra",
+    "input": "有 12 个外观相同的球，其中一个重量不同，如何用天平在三次称量内找出它？",
+    "reasoning": {
+      "effort": "high"
+    }
+  }'
+```
+
+```sh title="结构化输出"
+curl -sS "${base_url}/v1/responses" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  --data-raw '{
+    "model": "gpt-6.2-astra",
+    "input": "把「上海是中国的城市」转换成包含城市和国家的 JSON。",
+    "text": {
+      "format": {
+        "type": "json_schema",
+        "name": "city_record",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "city": {
+              "type": "string"
+            },
+            "country": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "city",
+            "country"
+          ],
+          "additionalProperties": false
+        },
+        "strict": true
+      }
+    }
+  }'
+```
+
+```sh title="流式输出"
+curl -sS -N "${base_url}/v1/responses" \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  --data-raw '{
+    "model": "gpt-6.2-astra",
+    "input": "用一句话问候读者。",
+    "stream": true
+  }'
+```
+
+</CodeTabs>
+</div>
+
+## 输出示例
+
+流式示例节选了创建、文本增量和完成事件。按到达顺序拼接 `response.output_text.delta` 的 `delta` 可得到显示文本。
+
+<div className="ark-api-input-examples">
+<CodeTabs hideIcon>
+
+```json title="文本响应"
+{
+  "id": "resp_example_text",
+  "object": "response",
+  "created_at": 1794873600,
+  "completed_at": 1794873601,
+  "status": "completed",
+  "error": null,
+  "incomplete_details": null,
+  "model": "gpt-6.2-astra",
+  "output": [
+    {
+      "id": "msg_example_text",
+      "type": "message",
+      "role": "assistant",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "阳光进入雨滴后发生折射、反射和色散，不同颜色的光便形成了彩虹。",
+          "annotations": [],
+          "logprobs": []
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 17,
+    "input_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0
+    },
+    "output_tokens": 25,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 42
+  }
+}
+```
+
+```json title="函数调用响应"
+{
+  "id": "resp_example_tool",
+  "object": "response",
+  "created_at": 1794873600,
+  "completed_at": 1794873601,
+  "status": "completed",
+  "error": null,
+  "incomplete_details": null,
+  "model": "gpt-6.2-astra",
+  "output": [
+    {
+      "type": "function_call",
+      "id": "fc_example_weather",
+      "call_id": "call_example_weather",
+      "name": "get_weather",
+      "arguments": "{\"city\":\"上海\"}",
+      "status": "completed"
+    }
+  ],
+  "usage": {
+    "input_tokens": 76,
+    "input_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0
+    },
+    "output_tokens": 22,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 98
+  }
+}
+```
+
+```text title="SSE 事件"
+event: response.created
+data: {"type":"response.created","sequence_number":0,"response":{"object":"response","created_at":1794873600,"completed_at":null,"status":"in_progress","error":null,"incomplete_details":null,"model":"gpt-6.2-astra","id":"resp_example_stream","output":[],"usage":null}}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","sequence_number":4,"item_id":"msg_example_stream","output_index":0,"content_index":0,"delta":"你好，欢迎阅读这份文档！","logprobs":[]}
+
+event: response.completed
+data: {"type":"response.completed","sequence_number":8,"response":{"object":"response","created_at":1794873600,"completed_at":1794873601,"status":"completed","error":null,"incomplete_details":null,"model":"gpt-6.2-astra","id":"resp_example_stream","output":[{"id":"msg_example_stream","type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"你好，欢迎阅读这份文档！","annotations":[],"logprobs":[]}]}],"usage":{"input_tokens":16,"input_tokens_details":{"cached_tokens":0,"cache_write_tokens":0},"output_tokens":11,"output_tokens_details":{"reasoning_tokens":0},"total_tokens":27}}}
+```
+
+</CodeTabs>
+</div>
+
+</aside>
+</div>
+</div>

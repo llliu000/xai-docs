@@ -1,0 +1,144 @@
+---
+title: 查询素材资产组合信息
+description: GetAssetGroup 请求参数、响应结构和示例。
+fullWidth: true
+centered: false
+---
+
+import { ApiField } from "../doubao-video/ApiField";
+
+export const officialUrl = "https://ark.volcengine.com/region:cn-beijing/docs/get-asset-group-api";
+
+<p className="ark-api-endpoint">
+  <strong>POST</strong>
+  <code apiPath="/api/v3/asset/?Action=GetAssetGroup&Version=2024-01-01" defaultBaseUrl="${ARK_ASSET_BASE_URL}" exampleBaseUrl="${ARK_ASSET_BASE_URL%/}" />
+</p>
+
+按素材组 ID 查询名称、描述、类型、所属项目和更新时间。查看组内素材可调用[查询素材资产列表](/doubao-assets/list-assets-api)。
+
+账号级限流为 10 QPS。
+
+<div className="ark-api-reference">
+<div className="ark-api-columns">
+<div>
+
+## 鉴权
+
+本接口支持以下鉴权方式，详情见 [素材资产 API 鉴权](https://docs.volcengine.com/docs/ark/private-virtual-avatar-library-guide-preview?lang=zh)。
+
+- API Key 鉴权适用于本文的素材网关示例。前往 [API Key 管理](https://ark.volcengine.com/region:cn-beijing/apiKey) 获取长效 API Key。直连官方素材接口使用 AK/SK 签名，前往 [Access Key 管理](https://console.volcengine.com/iam/keymanage) 获取访问密钥。
+
+---
+
+## 请求参数
+
+### Body 参数
+
+<div className="ark-api-fields">
+<ApiField name="Id" type="string" label="素材组 ID" sourceUrl={officialUrl} required>
+
+素材组的标识。可从 `CreateAssetGroup` 响应或 `ListAssetGroups` 查询结果取得。
+
+</ApiField>
+
+<ApiField name="ProjectName" type="string" label="所属项目" sourceUrl={officialUrl} defaultValue="default">
+
+资源所在的项目。若资源属于非默认项目，传入实际项目名。
+
+</ApiField>
+</div>
+
+## 响应参数
+
+接口业务字段位于 `Result` 中。`ResponseMetadata` 包含请求元信息。
+
+<div className="ark-api-fields">
+<ApiField name="CreateTime" type="string" label="创建时间" sourceUrl={officialUrl}>
+
+资源创建的时间。
+
+</ApiField>
+
+<ApiField name="Description" type="string" label="素材组描述" sourceUrl={officialUrl}>
+
+素材组当前的说明。
+
+</ApiField>
+
+<ApiField name="GroupType" type="string" label="素材组类型" sourceUrl={officialUrl}>
+
+`Public` 为公共素材组，`LivenessFace` 为活体真人素材组，`AIGC` 为虚拟人像素材组。
+
+</ApiField>
+
+<ApiField name="Id" type="string" label="素材组 ID" sourceUrl={officialUrl}>
+
+该素材组的唯一标识。
+
+</ApiField>
+
+<ApiField name="Name" type="string" label="素材组名称" sourceUrl={officialUrl}>
+
+素材组当前的名称。
+
+</ApiField>
+
+<ApiField name="ProjectName" type="string" label="所属项目" sourceUrl={officialUrl}>
+
+服务返回的资源所属项目。
+
+</ApiField>
+
+<ApiField name="UpdateTime" type="string" label="更新时间" sourceUrl={officialUrl}>
+
+资源最近更新的时间。
+
+</ApiField>
+</div>
+
+更多详情内容请见[火山官方文档](https://ark.volcengine.com/region:cn-beijing/docs/get-asset-group-api)。
+
+</div>
+<aside className="ark-api-examples" aria-label="接口示例">
+
+## 输入示例
+
+未配置站点基础地址时，将 `ARK_ASSET_BASE_URL` 设置为支持 Bearer 鉴权的素材网关地址，通过 `ARK_API_KEY` 提供凭证。直连火山方舟官方素材接口 `https://ark.cn-beijing.volcengineapi.com` 时，使用 AK/SK 签名。
+
+```sh title="cURL"
+curl --fail-with-body --request POST \
+  --url "${base_url}/api/v3/asset/?Action=GetAssetGroup&Version=2024-01-01" \
+  --header "Authorization: Bearer $ARK_API_KEY" \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+  "Id": "group-20261122123000-demo",
+  "ProjectName": "default"
+}'
+```
+
+## 输出示例
+
+```json
+{
+  "ResponseMetadata": {
+    "RequestId": "example-request-id",
+    "Action": "GetAssetGroup",
+    "Version": "2024-01-01",
+    "Service": "ark",
+    "Region": "cn-beijing"
+  },
+  "Result": {
+    "Id": "group-20261122123000-demo",
+    "Name": "demo-portrait-group",
+    "Description": "虚拟人像参考素材",
+    "GroupType": "AIGC",
+    "ProjectName": "default",
+    "CreateTime": "2026-11-22T04:30:00Z",
+    "UpdateTime": "2026-11-22T04:30:00Z"
+  }
+}
+```
+
+</aside>
+</div>
+</div>
