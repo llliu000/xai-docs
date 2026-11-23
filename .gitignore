@@ -3,3 +3,4 @@ dist/
 .zudoku/
 /public/pagefind/
 .DS_Store
+.idea
