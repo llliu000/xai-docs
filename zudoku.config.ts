@@ -23,7 +23,7 @@ const config = {
           label: "聊天",
           icon: "message-square",
           collapsible: true,
-          collapsed: true,
+          collapsed: false,
           items: [
             "chat/chat-format",
             "chat/openai-format",
@@ -36,7 +36,7 @@ const config = {
           label: "图像",
           icon: "images",
           collapsible: true,
-          collapsed: true,
+          collapsed: false,
           items: ["image/openai-format", "image/doubao-format"],
         },
         {
@@ -44,7 +44,7 @@ const config = {
           label: "豆包视频",
           icon: "video",
           collapsible: true,
-          collapsed: true,
+          collapsed: false,
           items: [
             "doubao-video/create-video-generation-task-api",
             "doubao-video/get-video-generation-task-api",
@@ -55,7 +55,7 @@ const config = {
           label: "豆包素材",
           icon: "images",
           collapsible: true,
-          collapsed: true,
+          collapsed: false,
           items: [
             "doubao-assets/create-asset-group-api",
             "doubao-assets/create-asset-api",
@@ -74,7 +74,7 @@ const config = {
           label: "阿里视频",
           icon: "video",
           collapsible: true,
-          collapsed: true,
+          collapsed: false,
           items: [
             "ali-video/create-video-generation-task-api",
             "ali-video/get-video-generation-task-api",
@@ -85,7 +85,7 @@ const config = {
           label: "可灵视频",
           icon: "video",
           collapsible: true,
-          collapsed: true,
+          collapsed: false,
           items: [
             "kling-video/create-video-generation-task-api",
             "kling-video/get-video-generation-task-api",
